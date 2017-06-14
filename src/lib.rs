@@ -286,41 +286,28 @@ impl<T: AdjacentBound> DietNode<T> {
     fn join_left(&mut self) {
         let max_parent_mut = self.left.max_parent_mut();
 
-        if let Some(max) = max_parent_mut.take() {
+        let interval = &mut self.interval;       
 
-            debug_assert!(max.right.is_none(), "the maximum node should have no right children");
+        let should_merge = max_parent_mut.as_ref().map_or(false, |c| c.interval.exclusive_end() == interval.inclusive_start());
 
-            if max.interval.exclusive_end() == self.interval.inclusive_start() {
-                // Deref the box so we can take the field values
-                let max = *max;
-
-                // If the maximum should be joined with self then the thing which used to point at max should now point at max's left node
-                *max_parent_mut = max.left;
-                self.interval.set_inclusive_start(max.interval.take_inclusive_start());
-            } else {
-                *max_parent_mut = Some(max);
-            }
-        }
-        
+        if should_merge {
+            let max = *max_parent_mut.take().unwrap();
+            *max_parent_mut = max.left;
+            interval.set_inclusive_start(max.interval.take_inclusive_start());
+        }        
     }
 
     fn join_right(&mut self) {
         let min_parent_mut = self.right.min_parent_mut();
 
-        if let Some(min) = min_parent_mut.take() {
+        let interval = &mut self.interval;
 
-            debug_assert!(min.left.is_none(), "the minimum node should have no left children");
+        let should_merge = min_parent_mut.as_ref().map_or(false, |c| c.interval.inclusive_start() == interval.exclusive_end());
 
-            if min.interval.inclusive_start() == self.interval.exclusive_end() {
-                // Deref the box so we can take the field values
-                let min = *min;
-
-                // If the minimum should be joined with self then the thing which used to point at max should now point at min's right node
-                *min_parent_mut = min.right;
-                self.interval.set_exclusive_end(min.interval.take_exclusive_end());
-            } else {
-                *min_parent_mut = Some(min);
-            }
+        if should_merge {
+            let min = *min_parent_mut.take().unwrap();
+            *min_parent_mut = min.right;
+            interval.set_exclusive_end(min.interval.take_exclusive_end());
         }
     }
 }
