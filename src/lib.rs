@@ -94,28 +94,22 @@ impl<T : AdjacentBound> DietNodeRelationshipOps for Option<Box<DietNode<T>>> {
         let mut current = self;
 
         loop {
-            let local_current = current;
-            if let Some(node) = local_current.take() {
-                if node.interval.contains(value) {
-                    *local_current = Some(node);
-                    return local_current;
-                }
 
-                if node.is_adjacent(value) {
-                    *local_current = Some(node);
-                    return local_current;
+            match current.as_ref().map(|n| n.interval.contains(value)) {
+                None | Some(true) => {
+                    // If there is no current or current contains the value then return it
+                    return current; 
                 }
+                _ => { }
+            }
 
-                if value < node.interval.inclusive_start() {
-                    *local_current = Some(node);
-                    current = &mut local_current.as_mut().unwrap().left
-                } else {
-                    debug_assert!(value >= node.interval.exclusive_end());
-                    *local_current = Some(node);
-                    current = &mut local_current.as_mut().unwrap().right
-                }
+            let node = {current}.as_mut().unwrap();
+            if value < node.interval.inclusive_start() {
+                current = &mut node.left;
             } else {
-                return local_current;
+                debug_assert!(value >= node.interval.exclusive_end());
+
+                current = &mut node.right;
             }
         }
     }
@@ -441,6 +435,14 @@ mod tests {
         assert_eq!(diet.len(), 2);
     }
 
+
+    #[test]
+    fn remove_of_adjacent_returns_false() {
+        let mut diet = Diet::from_iter([4, 5, 6].iter().cloned());
+
+        assert!(!diet.remove(&3));
+    }
+
      #[test]
     fn test_delete_split_left() {
         let mut d = Diet::default();
@@ -524,5 +526,6 @@ mod tests {
         d.remove(&7);
         assert!(d.contains(&6));
     }
+
 
 }
