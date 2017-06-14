@@ -49,20 +49,11 @@ impl<T : AdjacentBound> DietNodeRelationshipOps for Option<Box<DietNode<T>>> {
         let mut parent = self;
 
         loop {
-            let mut local_parent = parent;
-            if let Some(child) = local_parent.take() {
-                if child.right.is_none() {
-                    *local_parent = Some(child);
-                    return local_parent;
-                } else {
-                    *local_parent = Some(child);
-                    
-                    // TODO LH There must be a way to do this without take() and unwrap()
-                    parent = &mut local_parent.as_mut().unwrap().right;
-                    continue;
-                }
+            let move_next = parent.as_ref().map_or(false, |c|c.right.is_some());
+            if move_next {
+                parent = &mut {parent}.as_mut().unwrap().right
             } else {
-                return local_parent;
+                return parent;
             }
         }
     }
@@ -71,18 +62,11 @@ impl<T : AdjacentBound> DietNodeRelationshipOps for Option<Box<DietNode<T>>> {
         let mut parent = self;
 
         loop {
-            let mut local_parent = parent;
-            if let Some(child) = local_parent.take() {
-                if child.left.is_none() {
-                    *local_parent = Some(child);
-                    return local_parent;
-                } else {
-                    *local_parent = Some(child);
-                    parent = &mut local_parent.as_mut().unwrap().left;
-                    continue;
-                }
+            let move_next = parent.as_ref().map_or(false, |c|c.left.is_some());
+            if move_next {
+                parent = &mut {parent}.as_mut().unwrap().left
             } else {
-                return local_parent;
+                return parent;
             }
         }
     }
