@@ -8,14 +8,14 @@ use std::collections::VecDeque;
 use std::iter::FromIterator;
 use std::hash::{Hash, Hasher};
 
-#[derive(Debug, Eq)]
+#[derive(Debug, Eq, Clone)]
 struct DietNode<T> {
     interval: Interval<T>,
     left: Option<Box<DietNode<T>>>,
     right: Option<Box<DietNode<T>>>,
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct Diet<T> {
     root: Option<Box<DietNode<T>>>,
 }
@@ -554,5 +554,13 @@ mod tests {
         let second = Diet::from_iter([5, 1, 2].iter().cloned());
 
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn clone() {
+        let diet = Diet::from_iter([1, 2, 5].iter().cloned());
+        let cloned = diet.clone();
+
+        assert_eq!(diet, cloned);
     }
 }

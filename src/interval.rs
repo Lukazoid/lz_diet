@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use std::mem;
 
 /// A wrapper for `Range<T>` which exposes some useful methods.
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub(crate) struct Interval<T>(Range<T>);
 
 impl<T> From<Range<T>> for Interval<T> {
