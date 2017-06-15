@@ -334,6 +334,10 @@ impl<T> Diet<T> {
     pub fn len(&self) -> usize {
         self.root.as_ref().map_or(0, |n| n.len())
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
 }
 
 impl<T: AdjacentBound> Diet<T> {
