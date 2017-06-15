@@ -6,15 +6,16 @@ pub use adjacent_bound::AdjacentBound;
 use interval::Interval;
 use std::collections::VecDeque;
 use std::iter::FromIterator;
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 struct DietNode<T> {
     interval: Interval<T>,
     left: Option<Box<DietNode<T>>>,
     right: Option<Box<DietNode<T>>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Diet<T> {
     root: Option<Box<DietNode<T>>>,
 }
@@ -241,6 +242,23 @@ impl<'a, T> Iterator for DietNodeOrderedIterator<&'a DietNode<T>> {
         self.current = result.and_then(|n| n.right.as_ref()).map(Box::as_ref);
 
         result
+    }
+}
+
+impl<T: PartialEq> PartialEq for DietNode<T> {
+    fn eq(&self, other: &Self) -> bool {
+        let self_intervals = self.ordered_nodes().map(|n| &n.interval);
+        let other_intervals = other.ordered_nodes().map(|n| &n.interval);
+
+        self_intervals.eq(other_intervals)
+    }
+}
+
+impl<T: Hash> Hash for DietNode<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let intervals : Vec<_> = self.ordered_nodes().map(|n| &n.interval).collect();
+
+        intervals.hash(state);
     }
 }
 
@@ -509,4 +527,11 @@ mod tests {
 
     
 
+    #[test]
+    fn equals_with_different_insertion_order() {
+        let first = Diet::from_iter([1, 2, 5].iter().cloned());
+        let second = Diet::from_iter([5, 1, 2].iter().cloned());
+
+        assert_eq!(first, second);
+    }
 }

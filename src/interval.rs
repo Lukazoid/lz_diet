@@ -3,8 +3,8 @@ use std::borrow::Borrow;
 use std::mem;
 
 /// A wrapper for `Range<T>` which exposes some useful methods.
-#[derive(Debug)]
-pub struct Interval<T>(Range<T>);
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub(crate) struct Interval<T>(Range<T>);
 
 impl<T> From<Range<T>> for Interval<T> {
     fn from(value: Range<T>) -> Self {
