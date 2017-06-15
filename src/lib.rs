@@ -355,6 +355,14 @@ impl<T: AdjacentBound> Diet<T> {
     }
 }
 
+impl<T: AdjacentBound + Clone> Diet<T> {
+    pub fn extend_from_slice(&mut self, other: &[T]) {
+        for val in other.into_iter().cloned() {
+            self.insert(val);
+        }
+    }
+}
+
 // TODO LH Implement iterators which traverse the intervals in the tree
 
 impl<T> Default for Diet<T>{
@@ -529,7 +537,16 @@ mod tests {
         assert_eq!(diet.len(), 2);
     } 
 
-    
+    #[test]
+    fn extend_from_slice_inserts_values() {
+        let mut diet = Diet::default();
+
+        diet.extend_from_slice(&[1, 5, 3]);
+
+        assert!(diet.contains(&1));
+        assert!(diet.contains(&5));
+        assert!(diet.contains(&3));
+    }
 
     #[test]
     fn equals_with_different_insertion_order() {
