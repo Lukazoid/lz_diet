@@ -46,34 +46,9 @@ impl<T> Interval<T> {
     }
 }
 
-impl<T: Eq> Interval<T> {
-    pub fn adjacent_to(&self, other: &Interval<T>) -> bool {
-        self.inclusive_start() == other.exclusive_end() ||
-            self.exclusive_end() == other.inclusive_start()
-    }
-}
-
 impl<T: Ord> Interval<T> {
-    pub fn is_empty(&self) -> bool {
-        self.inclusive_start() >= self.exclusive_end()
-    }
-
     pub fn contains<Q>(&self, value: &Q) -> bool where T: Borrow<Q>, Q: Ord + ?Sized {
         value >= self.inclusive_start().borrow() &&
             value < self.exclusive_end().borrow()
-    }
-
-    pub fn fully_contains(&self, other: &Interval<T>) -> bool {
-        other.inclusive_start() >= self.inclusive_start() && 
-            other.exclusive_end() <= self.exclusive_end()
-    }
-
-    pub fn overlaps(&self, other: &Interval<T>) -> bool {
-        if self.is_empty() || other.is_empty() {
-            return false;
-        }
-
-        self.inclusive_start() < other.exclusive_end() &&
-            self.exclusive_end() > other.inclusive_start()
     }
 }

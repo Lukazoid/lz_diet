@@ -4,8 +4,6 @@ mod adjacent_bound;
 pub use adjacent_bound::AdjacentBound;
 
 use interval::Interval;
-use std::borrow::Borrow;
-use std::ops::Range;
 use std::collections::VecDeque;
 use std::iter::FromIterator;
 
@@ -217,30 +215,6 @@ impl<'a, T> Iterator for DietNodeIterator<&'a DietNode<T>> {
 }
 
 impl<T> DietNode<T> {
-    fn min_inclusive_start(&self) -> &T {
-        let mut current = self;
-
-        loop {
-            if let Some(child) = current.left.as_ref() {
-                current = child;
-            } else {
-                return current.interval.inclusive_start();   
-            }
-        }
-    }
-
-    fn max_exclusive_end(&self) -> &T {
-        let mut current = self;
-
-        loop {
-            if let Some(child) = current.right.as_ref() {
-                current = child;
-            } else {
-                return current.interval.exclusive_end();   
-            }
-        }
-    }
-
     pub fn nodes(&self) -> DietNodeIterator<&DietNode<T>> {
         let mut pending = VecDeque::new();
         pending.push_back(self);
@@ -252,11 +226,6 @@ impl<T> DietNode<T> {
 
     pub fn len(&self) -> usize {
         self.nodes().count()
-    }
-
-    pub fn is_adjacent<Q: ?Sized>(&self, value: &Q) -> bool where T : Borrow<Q>, Q : AdjacentBound {
-        value.comes_before(self.interval.inclusive_start().borrow()) || 
-                    value == self.interval.exclusive_end().borrow()
     }
 }
 
@@ -362,7 +331,7 @@ mod tests {
 
     #[test]
     fn contains_returns_true_for_existing_value(){
-        let mut diet = Diet::from_iter([3, 1, 5].iter().cloned());
+        let diet = Diet::from_iter([3, 1, 5].iter().cloned());
 
         assert!(diet.contains(&5));
     }
