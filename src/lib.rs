@@ -20,8 +20,14 @@ pub struct Diet<T> {
 }
 
 #[derive(Debug)]
-struct DietNodeIterator<T> {
+struct DietNodeBreadthIterator<T> {
     pending: VecDeque<T>
+}
+
+#[derive(Debug)]
+struct DietNodeOrderedIterator<T> {
+    current: Option<T>,
+    stack: Vec<T>,
 }
 
 trait DietNodeRelationshipOps {
@@ -198,7 +204,7 @@ impl<T : AdjacentBound> DietNodeRelationshipOps for Option<Box<DietNode<T>>> {
     }
 }
 
-impl<'a, T> Iterator for DietNodeIterator<&'a DietNode<T>> {
+impl<'a, T> Iterator for DietNodeBreadthIterator<&'a DietNode<T>> {
     type Item = &'a DietNode<T>;
     
     fn next(&mut self) -> Option<&'a DietNode<T>> {
@@ -214,13 +220,44 @@ impl<'a, T> Iterator for DietNodeIterator<&'a DietNode<T>> {
     }
 }
 
+impl<'a, T> Iterator for DietNodeOrderedIterator<&'a DietNode<T>> {
+    type Item = &'a DietNode<T>;
+
+    fn next(&mut self) -> Option<&'a DietNode<T>> {
+        
+        let mut current = self.current.take();
+
+        // Move to the left-most node
+        while let Some(node) = current {
+            // As we pass each node push it to the stack to be returned and right-traversed later
+            self.stack.push(node);
+
+            current = node.left.as_ref().map(Box::as_ref);
+        }
+
+        let result = self.stack.pop();
+
+        // Attempt to move the iterator to the right node
+        self.current = result.and_then(|n| n.right.as_ref()).map(Box::as_ref);
+
+        result
+    }
+}
+
 impl<T> DietNode<T> {
-    pub fn nodes(&self) -> DietNodeIterator<&DietNode<T>> {
+    pub fn nodes(&self) -> DietNodeBreadthIterator<&DietNode<T>> {
         let mut pending = VecDeque::new();
         pending.push_back(self);
 
-        DietNodeIterator {
+        DietNodeBreadthIterator {
             pending: pending
+        }
+    }
+
+    pub fn ordered_nodes(&self) -> DietNodeOrderedIterator<&DietNode<T>> {
+        DietNodeOrderedIterator {
+            current: Some(self),
+            stack: Default::default()
         }
     }
 
