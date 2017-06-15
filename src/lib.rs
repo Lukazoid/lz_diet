@@ -234,7 +234,7 @@ impl<T: AdjacentBound> DietNode<T> {
     pub fn split_on_value(&mut self, value: &T) {
         debug_assert!(self.interval.contains(value), "the value should be contained within the interval");
 
-        let old_exclusive_end = self.interval.set_exclusive_end(value.decrement());
+        let old_exclusive_end = self.interval.set_exclusive_end(value.to_owned());
 
         let new_right_interval = Interval::from(value.increment()..old_exclusive_end);
 
@@ -395,106 +395,81 @@ mod tests {
     }
 
     #[test]
-    fn remove_removes_values(){
-        let mut diet = Diet::from_iter([5, 6, 1, 2, 8, 9].iter().cloned());
-
-        assert!(diet.remove(&5));
-        assert!(diet.remove(&6));
-
-        assert_eq!(diet.len(), 2);
-    }
-
-
-    #[test]
     fn remove_of_adjacent_returns_false() {
         let mut diet = Diet::from_iter([4, 5, 6].iter().cloned());
 
         assert!(!diet.remove(&3));
     }
 
-     #[test]
-    fn test_delete_split_left() {
-        let mut d = Diet::default();
-        d.insert(8);
-        d.insert(9);
-        d.insert(10);
+    #[test]
+    fn remove_of_lower_bounds() {
+        let mut diet = Diet::from_iter([50, 51, 52, 1, 2, 20, 21].iter().cloned());
 
-        d.insert(2);
-        d.insert(4);
-        d.insert(6);
-        d.insert(14);
-        d.insert(12);
-        d.insert(16);
+        assert!(diet.remove(&50));
+        assert!(!diet.contains(&50));
 
-        d.remove(&8);
-        d.remove(&9);
-        d.remove(&10);
+        assert!(diet.remove(&51));
+        assert!(!diet.contains(&51));
 
-        assert!(d.contains(&2));
-        assert!(d.contains(&4));
-        assert!(d.contains(&6));
-        assert!(d.contains(&14));
-        assert!(d.contains(&12));
-        assert!(d.contains(&16));
+        assert!(diet.remove(&1));
+        assert!(!diet.contains(&1));
+
+        assert!(diet.remove(&20));
+        assert!(!diet.contains(&20));
+
+        assert_eq!(diet.len(), 3);
     }
+
+    #[test]
+    fn remove_of_upper_bounds() {
+        let mut diet = Diet::from_iter([50, 51, 52, 1, 2, 20, 21].iter().cloned());
+
+        assert!(diet.remove(&52));
+        assert!(!diet.contains(&52));
+
+        assert!(diet.remove(&51));
+        assert!(!diet.contains(&51));
+
+        assert!(diet.remove(&2));
+        assert!(!diet.contains(&2));
+
+        assert!(diet.remove(&21));
+        assert!(!diet.contains(&21));
+
+        assert_eq!(diet.len(), 3);
+    }
+
+    #[test]
+    fn remove_root_node() {
+        let mut diet = Diet::from_iter([50, 51, 1, 2, 10, 20, 21].iter().cloned());
+
+        assert!(diet.remove(&50));
+        assert!(!diet.contains(&50));
+        assert!(diet.remove(&51));
+        assert!(!diet.contains(&51));
+
+        assert_eq!(diet.len(), 3);
+
+        assert!(diet.contains(&1));
+        assert!(diet.contains(&2));
+        assert!(diet.contains(&10));
+        assert!(diet.contains(&20));
+        assert!(diet.contains(&21));
+    }
+
+    #[test]
+    fn remove_within_interval() {
+        let mut diet = Diet::from_iter([1, 2, 3].iter().cloned());
+
+        assert!(diet.remove(&2));
+        assert!(!diet.contains(&2));
+
+        assert!(diet.contains(&1));
+        assert!(diet.contains(&3));
+
+        assert_eq!(diet.len(), 2);
+    } 
 
     
-    #[test]
-    fn test_delete_simple() {
-        let mut d = Diet::default();
-        d.remove(&5);
-        d.insert(5);
-        assert!(d.contains(&5));
-        d.remove(&5);
-        assert!(!d.contains(&5));
-    }
-
-    #[test]
-    fn test_delete_branch() {
-        let mut d = Diet::default();
-        d.insert(5);
-        d.insert(3);
-        d.insert(7);
-
-        d.remove(&3);
-        assert!(!d.contains(&3));
-        assert!(d.contains(&5));
-        assert!(d.contains(&7));
-
-        d.remove(&7);
-        assert!(d.contains(&5));
-    }
-
-    #[test]
-    fn test_delete_replace_merge() {
-        let mut d = Diet::default();
-        d.insert(5);
-        d.insert(3);
-
-        d.remove(&5);
-        assert!(!d.contains(&5));
-        assert!(d.contains(&3));
-
-        d.insert(7);
-        d.remove(&3);
-        assert!(!d.contains(&3));
-        assert!(d.contains(&7));
-    }
-
-    #[test]
-    fn test_delete_lower_upper() {
-        let mut d = Diet::default();
-        d.insert(5);
-        d.insert(6);
-        d.insert(7);
-
-        d.remove(&5);
-        assert!(d.contains(&6));
-        assert!(d.contains(&7));
-
-        d.remove(&7);
-        assert!(d.contains(&6));
-    }
-
 
 }

@@ -1,4 +1,4 @@
-pub trait AdjacentBound : Ord {
+pub trait AdjacentBound : Ord + ToOwned<Owned=Self> + Sized {
     fn is_adjacent(&self, other: &Self) -> bool {
         self.comes_before(other) || 
             self.comes_after(other)
