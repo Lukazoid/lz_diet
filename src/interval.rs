@@ -4,7 +4,7 @@ use std::mem;
 
 /// A wrapper for `Range<T>` which exposes some useful methods.
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
-pub(crate) struct Interval<T>(Range<T>);
+pub struct Interval<T>(Range<T>);
 
 impl<T> From<Range<T>> for Interval<T> {
     fn from(value: Range<T>) -> Self {
@@ -12,7 +12,18 @@ impl<T> From<Range<T>> for Interval<T> {
     }
 }
 
+impl<T> Into<Range<T>> for Interval<T> {
+    fn into(self) -> Range<T> {
+        self.0
+    }
+}
+
 impl<T> Interval<T> {
+
+    pub fn borrow<Q: ?Sized>(&self) -> Interval<&Q> where T: Borrow<Q>{
+        Interval(self.0.start.borrow()..self.0.end.borrow())
+    }
+
     pub fn take_inclusive_start(self) -> T {
         self.0.start
     }
@@ -44,9 +55,7 @@ impl<T> Interval<T> {
     pub fn set_exclusive_end(&mut self, value: T) -> T {
         mem::replace(&mut self.0.end, value)
     }
-}
 
-impl<T: Ord> Interval<T> {
     pub fn contains<Q>(&self, value: &Q) -> bool where T: Borrow<Q>, Q: Ord + ?Sized {
         value >= self.inclusive_start().borrow() &&
             value < self.exclusive_end().borrow()
