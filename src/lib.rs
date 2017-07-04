@@ -195,7 +195,7 @@ impl<T: AdjacentBound> Diet<T> {
         where T: Borrow<Q>, 
               Q: ?Sized + Ord + ToOwned<Owned=T>
     {
-        let (removed, remove_node, _) = self.root.as_mut().map(|root| {
+        let (removed, remove_node) = self.root.as_mut().map(|root| {
             let result = root.walk_reshape_state((false, false, Some(value)),
                 |node, &mut (ref mut removed, ref mut remove_node, ref mut to_remove)| {
                     
@@ -244,13 +244,13 @@ impl<T: AdjacentBound> Diet<T> {
 
             root.rebalance();
 
-            result
-        }).unwrap_or((false, false, None));
+            (result.0, result.1)
+        }).unwrap_or((false, false));
 
         if removed {
             true
         } else if remove_node {
-            if self.root.as_mut().unwrap().try_remove(|node, _| node.rebalance()).is_none() {
+            if self.root.as_mut().expect("there must be a root node to be removed").try_remove(|node, _| node.rebalance()).is_none() {
                 self.root = None;
             }
             
@@ -427,15 +427,17 @@ mod tests {
 
     #[test]
     fn remove_within_interval() {
-        let mut diet = Diet::from_iter([1, 2, 3].iter().cloned());
+        let mut diet = Diet::from_iter([1, 2, 3, 5].iter().cloned());
 
         assert!(diet.remove(Cow::Owned(2)));
+        
         assert!(!diet.contains(&2));
 
         assert!(diet.contains(&1));
         assert!(diet.contains(&3));
+        assert!(diet.contains(&5));
 
-        assert_eq!(diet.len(), 2);
+        assert_eq!(diet.len(), 3);
     }
 
     #[test]

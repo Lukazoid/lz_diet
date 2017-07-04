@@ -194,8 +194,10 @@ impl<T: AdjacentBound> DietNode<T> {
 
             let mut new_left = Box::new(DietNode::new(new_left_interval));
             new_left.insert_left(old_left);
+            new_left.rebalance();
 
             self.insert_left(Some(new_left));
+            self.rebalance();
         }
     }
 
@@ -211,8 +213,10 @@ impl<T: AdjacentBound> DietNode<T> {
 
             let mut new_right = Box::new(DietNode::new(new_right_interval));
             new_right.insert_right(old_right);
+            new_right.rebalance();
 
             self.insert_right(Some(new_right));
+            self.rebalance();
         }
     }
 
