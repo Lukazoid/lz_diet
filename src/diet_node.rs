@@ -1,7 +1,7 @@
 use node_mut_ext::NodeMutExt;
 use interval::Interval;
 use adjacent_bound::AdjacentBound;
-use binary_tree::{Node, NodeMut};
+use binary_tree::{Node, NodeMut, WalkAction};
 use std::mem;
 use std::borrow::Borrow;
 use walk_direction::WalkDirection;
@@ -173,9 +173,113 @@ impl<T> DietNode<T> {
 
         debug_assert!(self.is_balanced());
     }
+
 }
 
 impl<T: AdjacentBound> DietNode<T> {
+    pub(crate) fn insert(&mut self, value: T) -> bool {
+        let (inserted, _) =
+            self.walk_reshape_state((false, Some(value)),
+                                    |node, &mut (ref mut inserted, ref mut value_option)| {
+                let value = value_option.take().unwrap();
+                match node.insert_or_walk(value) {
+                    Ok(did_insert) => {
+                        *inserted = did_insert;
+                        WalkAction::Stop
+                    }
+                    Err((value, direction)) => {
+                        *value_option = Some(value);
+                        direction.into()
+                    }
+                }
+            },
+                                    |node, &mut (ref mut inserted, ref mut value_option)| {
+                if let Some(value) = value_option.take() {
+                    match node.insert_or_walk(value) {
+                        Ok(did_insert) => {
+                            *inserted = did_insert;
+
+                            debug_assert!(node.is_balanced());
+                        }
+                        Err((value, WalkDirection::Left)) => {
+                            let exclusive_end = value.increment();
+                            node.insert_left(Some(Box::new(DietNode::new(value..exclusive_end))));
+
+                            node.rebalance();
+                        }
+                        Err((value, WalkDirection::Right)) => {
+                            let exclusive_end = value.increment();
+                            node.insert_right(Some(Box::new(DietNode::new(value..exclusive_end))));
+
+                            node.rebalance();
+                        }
+                    }
+                }
+
+            },
+                                    |node, _, _| node.rebalance());
+
+        self.rebalance();
+
+        inserted
+    }
+
+    
+    pub(crate) fn remove<Q>(&mut self, value: Cow<Q>) -> (bool, bool) 
+        where T: Borrow<Q>, 
+              Q: ?Sized + Ord + ToOwned<Owned=T>
+        {
+            let result = self.walk_reshape_state((false, false, Some(value)),
+            |node, &mut (ref mut removed, ref mut remove_node, ref mut to_remove)| {
+                
+                let value = to_remove.take().expect("should only be traversing if there is a value to remove");
+                match node.remove_or_walk(value) {
+                    Ok(true) => {
+                        *remove_node = true;
+                        WalkAction::Stop
+                    }
+                    Ok(false) => {
+                        *removed = true;
+                        WalkAction::Stop
+                    },
+                    Err((value, direction)) => {
+                        *to_remove = Some(value);
+                        direction.into()
+                    }
+                }
+            },
+            |node, _| node.rebalance(),
+            |node, action, &mut (ref mut removed, ref mut remove_node, _) | {
+                if mem::replace(remove_node, false) {
+                    debug_assert_eq!(*removed, false);
+                    
+                    match action {
+                        WalkAction::Left => {
+                            let mut left = node.detach_left().unwrap();    
+                            if left.try_remove(|node, _| node.rebalance()).is_some() {
+                                node.insert_left(Some(left));
+                            }
+                        }
+                        WalkAction::Right => {
+                            let mut right = node.detach_right().unwrap();    
+                            if right.try_remove(|node, _| node.rebalance()).is_some() {
+                                node.insert_right(Some(right));
+                            }
+                        }
+                        WalkAction::Stop => unreachable!()
+                    }
+
+                    *removed = true;
+                }
+
+                node.rebalance();
+            });
+
+        self.rebalance();
+
+        (result.0, result.1)
+    }
+
     fn split_on_value(&mut self, value: T) {
         if self.balance_factor() > 0 {
             self.split_left_on_value(value);

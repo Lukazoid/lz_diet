@@ -9,7 +9,6 @@ mod adjacent_bound;
 pub use adjacent_bound::AdjacentBound;
 
 mod walk_direction;
-use walk_direction::WalkDirection;
 
 mod diet_node;
 pub use diet_node::{DietNode, DietNodePtr};
@@ -19,12 +18,10 @@ pub use iterators::{Iter, IntoIter};
 
 
 use std::iter::FromIterator;
-use std::mem;
 use std::borrow::{Borrow, Cow};
 use std::hash::{Hash, Hasher};
 use binary_tree::{BinaryTree, WalkAction, Node, NodeMut};
 use binary_tree::iter::IntoIter as GenIntoIter;
-use node_mut_ext::NodeMutExt;
 
 #[derive(Debug, Clone, Eq)]
 pub struct Diet<T> {
@@ -138,49 +135,7 @@ impl<T> IntoIterator for Diet<T> {
 impl<T: AdjacentBound> Diet<T> {
     pub fn insert(&mut self, value: T) -> bool {
         if let Some(ref mut root) = self.root {
-
-            let (inserted, _) = root.walk_reshape_state((false, Some(value)),
-                |node, &mut (ref mut inserted, ref mut value_option)| {
-                    let value = value_option.take().unwrap();
-                    match node.insert_or_walk(value) {
-                        Ok(did_insert) => {
-                            *inserted = did_insert;
-                            WalkAction::Stop
-                        }
-                        Err((value, direction)) => {
-                            *value_option = Some(value);
-                            direction.into()
-                        }
-                    }
-                },
-                |node, &mut (ref mut inserted, ref mut value_option)| {
-                    if let Some(value) = value_option.take() {
-                        match node.insert_or_walk(value) {
-                            Ok(did_insert) => {
-                                *inserted = did_insert;
-
-                                debug_assert!(node.is_balanced());
-                            }
-                            Err((value, WalkDirection::Left)) => {
-                                let exclusive_end = value.increment();
-                                node.insert_left(Some(Box::new(DietNode::new(value..exclusive_end))));
-
-                                node.rebalance();
-                            }
-                            Err((value, WalkDirection::Right)) => {
-                                let exclusive_end = value.increment();
-                                node.insert_right(Some(Box::new(DietNode::new(value..exclusive_end))));
-
-                                node.rebalance();
-                            }
-                        }
-                    }
-
-                }, |node, _, _| node.rebalance());
-
-            root.rebalance();
-
-            inserted
+            root.insert(value)            
         } else {
             let exclusive_end = value.increment();
             
@@ -195,57 +150,7 @@ impl<T: AdjacentBound> Diet<T> {
         where T: Borrow<Q>, 
               Q: ?Sized + Ord + ToOwned<Owned=T>
     {
-        let (removed, remove_node) = self.root.as_mut().map(|root| {
-            let result = root.walk_reshape_state((false, false, Some(value)),
-                |node, &mut (ref mut removed, ref mut remove_node, ref mut to_remove)| {
-                    
-                    let value = to_remove.take().expect("should only be traversing if there is a value to remove");
-                    match node.remove_or_walk(value) {
-                        Ok(true) => {
-                            *remove_node = true;
-                            WalkAction::Stop
-                        }
-                        Ok(false) => {
-                            *removed = true;
-                            WalkAction::Stop
-                        },
-                        Err((value, direction)) => {
-                            *to_remove = Some(value);
-                            direction.into()
-                        }
-                    }
-                },
-                |node, _| node.rebalance(),
-                |node, action, &mut (ref mut removed, ref mut remove_node, _) | {
-                    if mem::replace(remove_node, false) {
-                        debug_assert_eq!(*removed, false);
-                        
-                        match action {
-                            WalkAction::Left => {
-                                let mut left = node.detach_left().unwrap();    
-                                if left.try_remove(|node, _| node.rebalance()).is_some() {
-                                    node.insert_left(Some(left));
-                                }
-                            }
-                            WalkAction::Right => {
-                                let mut right = node.detach_right().unwrap();    
-                                if right.try_remove(|node, _| node.rebalance()).is_some() {
-                                    node.insert_right(Some(right));
-                                }
-                            }
-                            WalkAction::Stop => unreachable!()
-                        }
-
-                        *removed = true;
-                    }
-
-                    node.rebalance();
-                });
-
-            root.rebalance();
-
-            (result.0, result.1)
-        }).unwrap_or((false, false));
+        let (removed, remove_node) = self.root.as_mut().map(|root| root.remove(value)).unwrap_or((false, false));
 
         if removed {
             true
@@ -332,7 +237,6 @@ mod tests {
 
         diet.insert(2);
 
-        println!("{:?}", diet);
         assert_eq!(diet.len(), 1);
     }
 
