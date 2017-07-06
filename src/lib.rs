@@ -209,7 +209,7 @@ impl<T: AdjacentBound> Diet<T> {
                             *removed = true;
                             WalkAction::Stop
                         },
-                        Err((direction, value)) => {
+                        Err((value, direction)) => {
                             *to_remove = Some(value);
                             direction.into()
                         }

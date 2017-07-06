@@ -245,12 +245,12 @@ impl<T: AdjacentBound> DietNode<T> {
         }
     }
 
-    pub(crate) fn remove_or_walk<'a, Q: ?Sized>(&mut self, value: Cow<'a, Q>) -> Result<bool, (WalkDirection, Cow<'a, Q>)>
+    pub(crate) fn remove_or_walk<'a, Q: ?Sized>(&mut self, value: Cow<'a, Q>) -> Result<bool, (Cow<'a, Q>, WalkDirection)>
     where T: Borrow<Q>,
           Q: Ord + ToOwned<Owned=T> {
 
         if let Ok(direction) = self.calculate_walk_direction(&value) {
-            Err((direction, value))
+            Err((value, direction))
         } else {
             debug_assert!(self.value().contains(&value));
 
