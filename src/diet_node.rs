@@ -100,6 +100,135 @@ impl<T> DietNode<T> {
         }
     }
 
+    // Detaches max from `self` or `self` if there are no right children.
+    // Returns the remaining self (if any) and the max.
+    fn detach_max_or_self(mut self) -> (Option<Self>, Self) {
+        if let Some(n) = self.detach_max(|_| true, |node, _| node.rebalance()) {
+            (Some(self), *n)
+        } else {
+            (None, self)
+        }
+    }
+
+    // Detaches min from `self` or `self` if there are no left children.
+    // Returns the remaining self (if any) and the min.
+    fn detach_min_or_self(mut self) -> (Option<Self>, Self) {
+        if let Some(n) = self.detach_min(|_| true, |node, _| node.rebalance()) {
+            (Some(self), *n)
+        } else {
+            (None, self)
+        }
+    }
+
+    fn navigate_right_and_insert_at_height(&mut self, height: usize, new_node: DietNode<T>) {
+        
+        // Wrap it in an option so it may be taken
+        let mut new_node = Some(new_node);
+
+        self.walk_reshape(|l| {
+                    if l.height == height {
+                        let new_node = new_node.take()
+                            .expect("only one node should have the same height");
+
+                        // 4. replace that node with a new node with value n, and subtrees l and right. O(1) 
+                        // By construction, the new node is AVL-balanced, and its subtree 1 taller than right.
+                        let new_left = mem::replace(l, new_node);
+
+                        l.insert_left(Some(Box::new(new_left)));
+
+                        WalkAction::Stop
+                    } else {
+                        WalkAction::Right
+                    }
+                },
+                                   |_| {},
+                                   |node, _| node.rebalance());
+    }
+
+    fn navigate_left_and_insert_at_height(&mut self, height: usize, new_node: DietNode<T>) {
+        
+        let mut new_node = Some(new_node);
+
+        self.walk_reshape(|r| {
+                    if r.height == height {
+                        let new_node = new_node.take()
+                            .expect("only one node should have the same height");
+
+                        // 4. replace that node with a new node with value n, and subtrees left and r. O(1) 
+                        // By construction, the new node is AVL-balanced, and its subtree 1 taller than r.
+                        let new_right = mem::replace(r, new_node);
+
+                        r.insert_right(Some(Box::new(new_right)));
+
+                        WalkAction::Stop
+                    } else {
+                        WalkAction::Left
+                    }
+                },
+                                   |_| {},
+                                   |node, _| node.rebalance());
+    }
+
+    pub(crate) fn join(mut left: DietNode<T>, mut right: DietNode<T>) -> Self
+    {
+        // Logic from https://stackoverflow.com/a/2037338/921321
+
+        // 1. Determine the height of both trees.
+        let mut joined = if left.height < right.height {
+
+            // 2. remove the rightmost element from the left tree. Let 'n' be that element. (Adjust its computed height if necessary).
+            let (left, n) = left.detach_max_or_self();
+
+            let mut new_node = DietNode::new(n.into_parts().0);
+
+            if let Some(left_height) = left.as_ref().map(|node| node.height) {
+                new_node.insert_left(left.map(Box::new));
+
+                right.navigate_left_and_insert_at_height(left_height, new_node);
+                
+                right
+            } else {
+                // When there is no left node
+
+                // 3. In the right tree, navigate left until you reach the node whose subtree has the same height as the left tree. Let r be that node.
+
+                // 4. replace that node with a new node with value n, and subtrees left and r.
+                // By construction, the new node is AVL-balanced, and its subtree 1 taller than r.
+                new_node.insert_right(Some(Box::new(right)));
+
+                new_node
+            }
+        } else {
+
+            // 2. remove the leftmost element from the right tree. Let 'n' be that element. (Adjust its computed height if necessary).
+            let (right, n) = right.detach_min_or_self();
+
+            let mut new_node = DietNode::new(n.into_parts().0);
+
+            if let Some(right_height) = right.as_ref().map(|node| node.height) {
+                new_node.insert_right(right.map(Box::new));
+
+                left.navigate_right_and_insert_at_height(right_height, new_node);
+                
+                left
+            } else {
+                // When there is no right node
+
+                // 3. In the left tree, navigate right until you reach the node whose subtree has the same height as the right tree. Let l be that node.
+
+                // 4. replace that node with a new node with value n, and subtrees l and right.
+                // By construction, the new node is AVL-balanced, and its subtree 1 taller than l.
+                new_node.insert_left(Some(Box::new(left)));
+
+                new_node
+            }
+        };
+
+        joined.rebalance();
+        
+        joined
+    }
+
     pub(crate) fn calculate_walk_direction<Q: ?Sized>(&self, value: &Q) -> Result<WalkDirection, ()> where T: Borrow<Q>, Q: Ord {
         let interval = self.value();
 
@@ -484,5 +613,35 @@ mod tests {
         root.insert_left(Some(parent));
 
         assert_eq!(root.detach_min(|_| true, |_, _| {}), Some(min));
+    }
+
+    #[test]
+    fn join_root_with_taller_right() {
+        let left = DietNode::new(0..3);
+
+        let mut right = DietNode::new(7..9);
+        right.insert_right(Some(Box::new(DietNode::new(13..14))));
+
+        let joined = DietNode::join(left, right);
+
+        assert_eq!(joined.value(), &(7..9).into());
+
+        assert_eq!(joined.left.unwrap().value(), &(0..3).into());
+        assert_eq!(joined.right.unwrap().value(), &(13..14).into());
+    }
+
+    #[test]
+    fn join_root_with_taller_left() {
+        let mut left = DietNode::new(0..3);
+        left.insert_right(Some(Box::new(DietNode::new(5..6))));
+
+        let right = DietNode::new(7..9);
+
+        let joined = DietNode::join(left, right);
+
+        assert_eq!(joined.value(), &(5..6).into());
+
+        assert_eq!(joined.left.unwrap().value(), &(0..3).into());
+        assert_eq!(joined.right.unwrap().value(), &(7..9).into());
     }
 }
