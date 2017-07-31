@@ -20,11 +20,11 @@ macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
         impl AdjacentBound for $type {
             fn comes_before(&self, other: &Self) -> bool {
-                self == &(other - $one)
+                *self == (*other - $one)
             }
 
             fn comes_after(&self, other: &Self) -> bool {
-                self == &(other + $one)
+                *self == (*other + $one)
             }
 
             fn increment(&self) -> Self {
@@ -36,11 +36,11 @@ macro_rules! adjacent_bound_impl {
             }
 
             fn increment_ref(&mut self) {
-                *self += $one;
+                *self = *self + $one;
             }
 
             fn decrement_ref(&mut self) {
-                *self -= $one;
+                *self = *self - $one;
             }
         }
     }
@@ -58,5 +58,28 @@ adjacent_bound_impl!(i32, 1i32);
 adjacent_bound_impl!(u64, 1u64);
 adjacent_bound_impl!(i64, 1i64);
 
+#[cfg(feature = "chrono")]
+mod chrono_impl {
+    use chrono::{Date, DateTime, Duration, FixedOffset, Local, NaiveDate, NaiveDateTime,
+                 NaiveTime, Utc};
+    use AdjacentBound;
+
+    adjacent_bound_impl!(NaiveDate, Duration::days(1));
+    adjacent_bound_impl!(NaiveDateTime, Duration::min_value());
+    adjacent_bound_impl!(NaiveTime, Duration::min_value());
+
+    adjacent_bound_impl!(Date<Utc>, Duration::days(1));
+    adjacent_bound_impl!(Date<FixedOffset>, Duration::days(1));
+    adjacent_bound_impl!(Date<Local>, Duration::days(1));
+
+
+    adjacent_bound_impl!(DateTime<Utc>, Duration::min_value());
+    adjacent_bound_impl!(DateTime<FixedOffset>, Duration::min_value());
+    adjacent_bound_impl!(DateTime<Local>, Duration::min_value());
+
+}
+
 adjacent_bound_impl!(usize, 1usize);
-adjacent_bound_impl!(isize, 1isize);
+adjacent_bound_impl!(isize, 1isize);#[cfg(feature = "chrono")]
+#[cfg(feature = "chrono")]
+pub use self::chrono_impl::*;

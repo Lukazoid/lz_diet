@@ -1,6 +1,10 @@
 #[macro_use] extern crate matches;
 extern crate binary_tree;
 
+
+#[cfg(feature = "chrono")]
+extern crate chrono;
+
 mod node_mut_ext;
 mod interval;
 pub use interval::Interval;
