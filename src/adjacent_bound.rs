@@ -46,17 +46,39 @@ macro_rules! adjacent_bound_impl {
     }
 }
 
-adjacent_bound_impl!(u8, 1u8);
-adjacent_bound_impl!(i8, 1i8);
+macro_rules! adjacent_bound_impl_and_wrapping {
+    ($type:ty, $one:expr) => {
+        adjacent_bound_impl!($type, $one);
+        adjacent_bound_impl!(::std::num::Wrapping<$type>, ::std::num::Wrapping($one));
+    }
+}
 
-adjacent_bound_impl!(u16, 1u16);
-adjacent_bound_impl!(i16, 1i16);
+adjacent_bound_impl_and_wrapping!(u8, 1u8);
+adjacent_bound_impl_and_wrapping!(i8, 1i8);
 
-adjacent_bound_impl!(u32, 1u32);
-adjacent_bound_impl!(i32, 1i32);
+adjacent_bound_impl_and_wrapping!(u16, 1u16);
+adjacent_bound_impl_and_wrapping!(i16, 1i16);
 
-adjacent_bound_impl!(u64, 1u64);
-adjacent_bound_impl!(i64, 1i64);
+adjacent_bound_impl_and_wrapping!(u32, 1u32);
+adjacent_bound_impl_and_wrapping!(i32, 1i32);
+
+adjacent_bound_impl_and_wrapping!(u64, 1u64);
+adjacent_bound_impl_and_wrapping!(i64, 1i64);
+
+adjacent_bound_impl_and_wrapping!(usize, 1usize);
+adjacent_bound_impl_and_wrapping!(isize, 1isize);
+
+#[cfg(test)]
+mod tests {
+    use std::num::Wrapping;
+    use AdjacentBound;
+
+    #[test]
+    fn overflow_wrapping_tests() {
+        assert!(Wrapping(u32::max_value()).is_immediately_before(&Wrapping(0)));
+        assert!(Wrapping(0).is_immediately_after(&Wrapping(u32::max_value())));
+    }
+}
 
 #[cfg(feature = "chrono")]
 mod chrono_impl {
@@ -79,7 +101,5 @@ mod chrono_impl {
 
 }
 
-adjacent_bound_impl!(usize, 1usize);
-adjacent_bound_impl!(isize, 1isize);#[cfg(feature = "chrono")]
 #[cfg(feature = "chrono")]
 pub use self::chrono_impl::*;
