@@ -1,6 +1,9 @@
-#[macro_use] extern crate matches;
+#[macro_use]
+extern crate matches;
 extern crate binary_tree;
 
+#[macro_use]
+extern crate log;
 
 #[cfg(feature = "chrono")]
 extern crate chrono;
@@ -18,21 +21,20 @@ mod diet_node;
 pub use diet_node::{DietNode, DietNodePtr};
 
 mod iterators;
-pub use iterators::{Iter, IntoIter};
-
+pub use iterators::{IntoIter, Iter};
 
 use std::iter::FromIterator;
 use std::borrow::{Borrow, Cow};
 use std::hash::{Hash, Hasher};
-use binary_tree::{BinaryTree, WalkAction, Node, NodeMut};
+use binary_tree::{BinaryTree, Node, NodeMut, WalkAction};
 use binary_tree::iter::IntoIter as GenIntoIter;
 
 #[derive(Debug, Clone, Eq)]
 pub struct Diet<T> {
-    root: Option<Box<DietNode<T>>>
+    root: Option<Box<DietNode<T>>>,
 }
 
-impl<T> Drop for Diet<T>{
+impl<T> Drop for Diet<T> {
     fn drop(&mut self) {
         self.clear();
     }
@@ -40,19 +42,23 @@ impl<T> Drop for Diet<T>{
 
 impl<T> Diet<T> {
     pub fn new() -> Self {
-        Self {
-            root: None
-        }
+        Self { root: None }
     }
 
-    pub fn iter(&self) -> Iter<T>{
+    pub fn iter(&self) -> Iter<T> {
         self.into_iter()
     }
 
     pub fn clear(&mut self) {
-        // The iterator ensures we don't get a stackoverflow for a large tree as its drop implementation
-        // iterates and drops each node individually
-        let _ : GenIntoIter<DietNode<_>> = GenIntoIter::new(self.root.take());
+        debug!("clearing Diet");
+
+        {
+            // The iterator ensures we don't get a stackoverflow for a large tree
+            // as its drop implementation iterates and drops each node individually
+            let _: GenIntoIter<DietNode<_>> = GenIntoIter::new(self.root.take());
+        }
+
+        debug!("cleared Diet");
     }
 
     pub fn len(&self) -> usize {
@@ -63,11 +69,18 @@ impl<T> Diet<T> {
         self.root().is_none()
     }
 
-    pub fn contains<Q: ?Sized>(&self, value: &Q) -> bool where T: Borrow<Q>, Q: Ord {
+    pub fn contains<Q>(&self, value: &Q) -> bool
+    where
+        T: Borrow<Q>,
+        Q: ?Sized + Ord,
+    {
         if let Some(ref root) = self.root {
             let mut contains = false;
-            root.walk(|node|{
-                let walk_action = node.calculate_walk_direction(value).ok().map(|direction|direction.into()).unwrap_or(WalkAction::Stop);
+            root.walk(|node| {
+                let walk_action = node.calculate_walk_direction(value)
+                    .ok()
+                    .map(|direction| direction.into())
+                    .unwrap_or(WalkAction::Stop);
 
                 if matches!(walk_action, WalkAction::Stop) {
                     contains = true;
@@ -82,8 +95,11 @@ impl<T> Diet<T> {
     }
 }
 
-impl<A : AdjacentBound> FromIterator<A> for Diet<A> {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = A> {
+impl<A: AdjacentBound> FromIterator<A> for Diet<A> {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = A>,
+    {
         let mut diet = Diet::new();
 
         for value in iter {
@@ -139,10 +155,10 @@ impl<T> IntoIterator for Diet<T> {
 impl<T: AdjacentBound> Diet<T> {
     pub fn insert(&mut self, value: T) -> bool {
         if let Some(ref mut root) = self.root {
-            root.insert(value)            
+            root.insert(value)
         } else {
             let exclusive_end = value.increment();
-            
+
             let new_node = Box::new(DietNode::new(value..exclusive_end));
 
             self.root = Some(new_node);
@@ -150,22 +166,31 @@ impl<T: AdjacentBound> Diet<T> {
         }
     }
 
-    pub fn remove<Q>(&mut self, value: Cow<Q>) -> bool 
-        where T: Borrow<Q>, 
-              Q: ?Sized + Ord + ToOwned<Owned=T>
+    pub fn remove<Q>(&mut self, value: Cow<Q>) -> bool
+    where
+        T: Borrow<Q>,
+        Q: ?Sized + Ord + ToOwned<Owned = T>,
     {
-        let (removed, remove_node) = self.root.as_mut().map(|root| root.remove(value)).unwrap_or((false, false));
+        let remove_result = self.root
+            .as_mut()
+            .map(|root| root.remove(value))
+            .unwrap_or(Err(()));
 
-        if removed {
-            true
-        } else if remove_node {
-            if self.root.as_mut().expect("there must be a root node to be removed").try_remove(|node, _| node.rebalance()).is_none() {
-                self.root = None;
+        match remove_result {
+            Ok(true) => {
+                if self.root
+                    .as_mut()
+                    .expect("there must be a root node to be removed")
+                    .try_remove(|node, _| node.rebalance())
+                    .is_none()
+                {
+                    self.root = None;
+                }
+
+                true
             }
-            
-            true
-        } else {
-            false
+            Ok(false) => true,
+            Err(()) => false,
         }
     }
 }
@@ -178,7 +203,7 @@ impl<T: AdjacentBound + Clone> Diet<T> {
     }
 }
 
-impl<T> Default for Diet<T>{
+impl<T> Default for Diet<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -190,14 +215,14 @@ mod tests {
     use std::borrow::Cow;
 
     #[test]
-    fn contains_returns_false_for_default(){
+    fn contains_returns_false_for_default() {
         let diet = Diet::<u32>::default();
 
         assert!(!diet.contains(&5));
     }
 
     #[test]
-    fn contains_returns_true_for_existing_value(){
+    fn contains_returns_true_for_existing_value() {
         let diet = Diet::from_iter([3, 1, 5].iter().cloned());
 
         assert!(diet.contains(&5));
@@ -257,14 +282,14 @@ mod tests {
     }
 
     #[test]
-    fn remove_returns_false_for_default(){
+    fn remove_returns_false_for_default() {
         let mut diet = Diet::<u32>::default();
 
         assert!(!diet.remove(Cow::Owned(5)));
     }
 
     #[test]
-    fn remove_returns_false_for_non_existant_value(){
+    fn remove_returns_false_for_non_existant_value() {
         let mut diet = Diet::from_iter([1, 2, 3, 6].iter().cloned());
 
         assert!(!diet.remove(Cow::Owned(10)));
@@ -338,7 +363,7 @@ mod tests {
         let mut diet = Diet::from_iter([1, 2, 3, 5].iter().cloned());
 
         assert!(diet.remove(Cow::Owned(2)));
-        
+
         assert!(!diet.contains(&2));
 
         assert!(diet.contains(&1));

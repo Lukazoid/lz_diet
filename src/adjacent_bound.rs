@@ -1,29 +1,37 @@
+/// For types which have adjacent values.
 pub trait AdjacentBound: Ord {
+    /// Determines whether `self` and `other` are adjacent.
     fn is_adjacent(&self, other: &Self) -> bool {
-        self.comes_before(other) || self.comes_after(other)
+        self.is_immediately_before(other) || self.is_immediately_after(other)
     }
 
-    fn comes_before(&self, other: &Self) -> bool;
+    /// Determines whether `self` is immediately before `other`.
+    fn is_immediately_before(&self, other: &Self) -> bool;
 
-    fn comes_after(&self, other: &Self) -> bool;
+    /// Determines whether `self` is immediately after `other`.
+    fn is_immediately_after(&self, other: &Self) -> bool;
 
+    /// Returns a new value which is `self` incremented.
     fn increment(&self) -> Self;
 
+    /// Returns a new value which is `self` decremented.
     fn decrement(&self) -> Self;
 
+    /// Increments `self` in place.
     fn increment_ref(&mut self);
 
+    /// Decrements `self` in place.
     fn decrement_ref(&mut self);
 }
 
 macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
         impl AdjacentBound for $type {
-            fn comes_before(&self, other: &Self) -> bool {
+            fn is_immediately_before(&self, other: &Self) -> bool {
                 *self == (*other - $one)
             }
 
-            fn comes_after(&self, other: &Self) -> bool {
+            fn is_immediately_after(&self, other: &Self) -> bool {
                 *self == (*other + $one)
             }
 

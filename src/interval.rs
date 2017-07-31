@@ -19,8 +19,11 @@ impl<T> Into<Range<T>> for Interval<T> {
 }
 
 impl<T> Interval<T> {
-
-    pub fn borrow<Q: ?Sized>(&self) -> Interval<&Q> where T: Borrow<Q>{
+    pub fn borrow<Q>(&self) -> Interval<&Q>
+    where
+        T: Borrow<Q>,
+        Q: ?Sized,
+    {
         Interval(self.0.start.borrow()..self.0.end.borrow())
     }
 
@@ -30,8 +33,8 @@ impl<T> Interval<T> {
 
     pub fn inclusive_start(&self) -> &T {
         &self.0.start
-    }    
-    
+    }
+
     pub fn inclusive_start_mut(&mut self) -> &mut T {
         &mut self.0.start
     }
@@ -56,8 +59,11 @@ impl<T> Interval<T> {
         mem::replace(&mut self.0.end, value)
     }
 
-    pub fn contains<Q>(&self, value: &Q) -> bool where T: Borrow<Q>, Q: Ord + ?Sized {
-        value >= self.inclusive_start().borrow() &&
-            value < self.exclusive_end().borrow()
+    pub fn contains<Q>(&self, value: &Q) -> bool
+    where
+        T: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        value >= self.inclusive_start().borrow() && value < self.exclusive_end().borrow()
     }
 }
