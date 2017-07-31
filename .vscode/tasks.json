@@ -1,0 +1,49 @@
+{
+    "version": "0.1.0",
+    "command": "cargo",
+    "isShellCommand": true,
+    "showOutput": "always",
+    "suppressTaskName": true,
+    "tasks": [
+        {
+            "taskName": "cargo build",
+            "args": [
+                "build",
+                "--features",
+                """chrono""",
+            ],
+            "isBuildCommand": true
+        },
+        {
+            "taskName": "cargo run",
+            "args": [
+                "run"
+            ]
+        },
+        {
+            "taskName": "cargo test",
+            "args": [
+                "test",
+                "--features",
+                """chrono""",
+            ],
+            "isTestCommand": true
+        },
+        {
+            "taskName": "cargo check",
+            "args": [
+                "check",
+                "--features",
+                """chrono""",
+            ],
+        },
+        {
+            "taskName": "cargo doc",
+            "args": [
+                "doc",
+                "--features",
+                """chrono""",
+            ],
+        }
+    ]
+}
