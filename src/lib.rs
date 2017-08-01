@@ -169,7 +169,7 @@ impl<T: AdjacentBound> Diet<T> {
     pub fn remove<Q>(&mut self, value: Cow<Q>) -> bool
     where
         T: Borrow<Q>,
-        Q: ?Sized + Ord + ToOwned<Owned = T>,
+        Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
         let remove_result = self.root
             .as_mut()

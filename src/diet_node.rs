@@ -563,7 +563,7 @@ impl<T: AdjacentBound> DietNode<T> {
     pub(crate) fn remove<Q>(&mut self, value: Cow<Q>) -> Result<bool, ()>
     where
         T: Borrow<Q>,
-        Q: ?Sized + Ord + ToOwned<Owned = T>,
+        Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
         trace!("removing value");
 
@@ -731,7 +731,7 @@ impl<T: AdjacentBound> DietNode<T> {
     ) -> Result<bool, (Cow<'a, Q>, WalkDirection)>
     where
         T: Borrow<Q>,
-        Q: ?Sized + Ord + ToOwned<Owned = T>,
+        Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
         trace!("removing value or walking tree to where the value can be removed from");
 
@@ -746,14 +746,21 @@ impl<T: AdjacentBound> DietNode<T> {
             debug_assert!(self.value().contains(&value));
 
             trace!("this node contains the value");
+            let is_last_value;
+            let is_first_value;
+            {
+                let value_borrow: &Q = value.borrow();
 
-            let value = value.into_owned();
-            let is_immediately_before_end =
-                value.is_immediately_before(self.value().exclusive_end());
-            let requires_node_removal = if &value == self.value().inclusive_start() {
-                trace!("value is the start of the nodes interval");
-                if is_immediately_before_end {
-                    trace!("value is immediately before the end of the nodes interval");
+                is_last_value =
+                    value_borrow.is_immediately_before(self.value().exclusive_end().borrow());
+
+                is_first_value = value_borrow == self.value().inclusive_start().borrow();
+            };
+
+            let requires_node_removal = if is_first_value {
+                trace!("value is the first value in the nodes interval");
+                if is_last_value {
+                    trace!("value is the last value in the node's interval");
                     debug!("removing the value requires removal of the entire node");
 
                     true
@@ -764,8 +771,8 @@ impl<T: AdjacentBound> DietNode<T> {
 
                     false
                 }
-            } else if is_immediately_before_end {
-                trace!("value is immediately before the end of the node's interval");
+            } else if is_last_value {
+                trace!("value is the last value in the node's interval");
 
                 self.value_mut().exclusive_end_mut().decrement_ref();
 
@@ -774,6 +781,7 @@ impl<T: AdjacentBound> DietNode<T> {
             } else {
                 trace!("the value is in the middle of the node's interval so must be split");
 
+                let value = value.into_owned();
                 self.split_on_value(value);
 
                 debug!("split the node to remove the value");
