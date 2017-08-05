@@ -68,7 +68,7 @@ pub trait AdjacentBound: Ord {
 
 macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
-        impl AdjacentBound for $type {
+        impl ::AdjacentBound for $type {
             fn is_immediately_before(&self, other: &Self) -> bool {
                 *self == (*other - $one)
             }
@@ -121,7 +121,6 @@ adjacent_bound_impl_and_wrapping!(isize, 1isize);
 #[cfg(test)]
 mod tests {
     use std::num::Wrapping;
-    use AdjacentBound;
 
     #[test]
     fn overflow_wrapping_tests() {
@@ -134,7 +133,6 @@ mod tests {
 mod chrono_impl {
     use chrono::{Date, DateTime, Duration, FixedOffset, Local, NaiveDate, NaiveDateTime,
                  NaiveTime, Utc};
-    use AdjacentBound;
 
     adjacent_bound_impl!(NaiveDate, Duration::days(1));
     adjacent_bound_impl!(NaiveDateTime, Duration::min_value());
@@ -158,7 +156,6 @@ pub use self::chrono_impl::*;
 mod extprim_impl {
     use extprim::i128::i128;
     use extprim::u128::u128;
-    use AdjacentBound;
 
     adjacent_bound_impl!(i128, i128::one());
     adjacent_bound_impl!(u128, u128::one());
@@ -166,3 +163,12 @@ mod extprim_impl {
 
 #[cfg(feature = "extprim")]
 pub use self::extprim_impl::*;
+
+#[cfg(feature = "nightly")]
+mod nightly_impl {
+    adjacent_bound_impl_and_wrapping!(u128, 1u128);
+    adjacent_bound_impl_and_wrapping!(i128, 1i128);
+}
+
+#[cfg(feature = "nightly")]
+pub use self::nightly_impl::*;
