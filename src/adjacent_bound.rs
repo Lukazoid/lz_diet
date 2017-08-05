@@ -179,3 +179,16 @@ mod nightly_impl {
 
 #[cfg(feature = "nightly")]
 pub use self::nightly_impl::*;
+
+
+#[cfg(feature = "bigint")]
+mod num_bigint_impl {
+    use num_bigint::{BigInt, BigUint};
+    use num_traits::identities::One;
+
+    adjacent_bound_impl!(BigInt, BigInt::one());
+    adjacent_bound_impl!(BigUint, BigUint::one());
+}
+
+#[cfg(feature = "bigint")]
+pub use self::num_bigint_impl::*;

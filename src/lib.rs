@@ -14,6 +14,13 @@ extern crate chrono;
 #[cfg(feature = "extprim")]
 extern crate extprim;
 
+#[cfg(feature = "num-traits")]
+extern crate num_traits;
+
+#[cfg(feature = "num-bigint")]
+extern crate num_bigint;
+
+
 mod node_mut_ext;
 mod interval;
 pub use interval::Interval;
