@@ -127,6 +127,7 @@ adjacent_bound_impl_and_wrapping!(isize, 1isize);
 #[cfg(test)]
 mod tests {
     use std::num::Wrapping;
+    use AdjacentBound;        
 
     #[test]
     fn overflow_wrapping_tests() {
