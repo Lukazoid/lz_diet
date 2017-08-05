@@ -16,6 +16,10 @@ mod adjacent_bound;
 pub use adjacent_bound::AdjacentBound;
 
 mod walk_direction;
+pub(crate) use walk_direction::WalkDirection;
+
+mod split_result;
+pub(crate) use split_result::SplitResult;
 
 mod diet_node;
 pub use diet_node::{DietNode, DietNodePtr};
@@ -191,6 +195,36 @@ impl<T: AdjacentBound> Diet<T> {
             }
             Ok(false) => true,
             Err(()) => false,
+        }
+    }
+
+
+    pub fn split<Q>(mut self, value: Cow<Q>) -> (Diet<T>, Diet<T>)
+    where
+        T: Borrow<Q>,
+        Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
+    {
+        let split_result = self.root
+            .take()
+            .map(|node| node.split(value))
+            .unwrap_or(SplitResult::None);
+
+        match split_result {
+            SplitResult::Split(left, right) => (
+                Diet {
+                    root: Some(Box::new(left)),
+                },
+                Diet {
+                    root: Some(Box::new(right)),
+                },
+            ),
+            SplitResult::Single(node) => (
+                Diet {
+                    root: Some(Box::new(node)),
+                },
+                Diet::new(),
+            ),
+            SplitResult::None => (Diet::new(), Diet::new()),
         }
     }
 }

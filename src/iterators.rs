@@ -1,5 +1,4 @@
-use interval::Interval;
-use diet_node::DietNode;
+use {Interval, DietNode};
 use binary_tree::iter::{IntoIter as GenIntoIter, Iter as GenIter};
 
 /// A borrowing `Iterator` for `DietNode`

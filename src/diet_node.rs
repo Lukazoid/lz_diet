@@ -1,10 +1,8 @@
 use node_mut_ext::NodeMutExt;
-use interval::Interval;
-use adjacent_bound::AdjacentBound;
+use {AdjacentBound, Interval, SplitResult, WalkDirection};
 use binary_tree::{Node, NodeMut, WalkAction};
 use std::mem;
 use std::borrow::Borrow;
-use walk_direction::WalkDirection;
 use std::cmp;
 use std::borrow::Cow;
 
@@ -139,7 +137,7 @@ impl<T> NodeMut for DietNode<T> {
 }
 
 impl<T> DietNode<T> {
-    pub fn new<I>(value: I) -> Self
+    pub(crate) fn new<I>(value: I) -> Self
     where
         I: Into<Interval<T>>,
     {
@@ -519,39 +517,81 @@ impl<T: AdjacentBound> DietNode<T> {
         inserted
     }
 
-    pub(crate) fn split<Q>(mut self, value: Cow<Q>) -> Result<(Self, Self), Self>
+    pub(crate) fn split<Q>(self, value: Cow<Q>) -> SplitResult<DietNode<T>>
     where
         T: Borrow<Q>,
-        Q: ?Sized + Ord + ToOwned<Owned = T>,
+        Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
-        let (merged_left, merged_right, _) = self.walk_reshape_state((None, None, Some(value)),
-            |node, &mut (ref mut merged_left, ref mut merged_right, ref mut to_split_on)|{
-                let value = to_split_on.take().unwrap();
+        trace!("splitting on value");
 
-                match node.calculate_walk_direction(&value) {
-                    Ok(WalkDirection::Left) => {
-                        *to_split_on = Some(value);
+        let mut merged_left = None;
+        let mut merged_right = None;
 
-                        let right = node.detach_right().map(|b| *b);
-                        *merged_right = Self::join_optional(merged_right.take(), right);
+        let mut current = Some(self);
 
-                        WalkAction::Left
-                    },
-                    Ok(WalkDirection::Right) => {
-                        *to_split_on = Some(value);
+        while let Some(mut current_node) = current.take() {
+            match current_node.calculate_walk_direction(&value) {
+                Ok(WalkDirection::Left) => {
+                    let left = current_node.detach_left();
+                    current_node.rebalance();
 
-                        WalkAction::Right
-                    },
-                    Err(_) => WalkAction::Stop,
+                    merged_right = Self::join_optional(Some(current_node), merged_right.take());
+
+                    current = left.map(|b| *b);
                 }
-            },
-            |node, _|{},
-            |node, action, _|node.rebalance());
+                Ok(WalkDirection::Right) => {
+                    let right = current_node.detach_right();
+                    current_node.rebalance();
+
+                    merged_left = Self::join_optional(merged_left.take(), Some(current_node));
+
+                    current = right.map(|b| *b);
+                }
+                Err(_) => {
+                    warn!("found contained");
+
+                    let remove_node = current_node.remove_or_walk(value.clone()).ok().unwrap();
+                    if remove_node {
+
+                        // if the node is to be removed we can just merge the
+                        // left and right children
+
+                        merged_left = Self::join_optional(
+                            merged_left.take(),
+                            current_node.detach_left().map(|n| *n),
+                        );
+                        merged_right = Self::join_optional(
+                            current_node.detach_right().map(|n| *n),
+                            merged_right.take(),
+                        );
+
+                        break;
+                    }
+
+                    // if the value was removed, we will keep traversing, this
+                    // should only traverse 2 more times at most as it will
+                    // find there is no node which contains the value any longer
+                    current = Some(current_node);
+                }
+            }
+        }
 
         match (merged_left, merged_right) {
-            (Some(left), Some(right)) => Ok((left, right)),
-            (Some(only), _) | (_, Some(only)) => Err(only),
-            _ => Err(self),
+            (Some(merged_left), Some(merged_right)) => {
+                debug!("successfully split on value");
+
+                SplitResult::Split(merged_left, merged_right)
+            }
+            (Some(only), None) | (None, Some(only)) => {
+                debug!("split resulted in only a single node");
+
+                SplitResult::Single(only)
+            }
+            (None, None) => {
+                debug!("split resulted in no nodes");
+
+                SplitResult::None
+            }
         }
     }
 
@@ -958,5 +998,91 @@ mod tests {
 
         assert_eq!(joined.left.unwrap().value(), &(0..3).into());
         assert_eq!(joined.right.unwrap().value(), &(7..9).into());
+    }
+
+    #[test]
+    fn split_of_single_node_with_value_less_than_interval() {
+        let node = DietNode::new(5..6);
+
+        let result = node.clone().split(Cow::Owned(3));
+
+        assert_eq!(result, SplitResult::Single(node));
+    }
+
+    #[test]
+    fn split_of_single_node_with_value_more_than_interval() {
+        let node = DietNode::new(5..6);
+
+        let result = node.clone().split(Cow::Owned(6));
+
+        assert_eq!(result, SplitResult::Single(node));
+    }
+
+    #[test]
+    fn split_of_single_node_with_start() {
+        let node = DietNode::new(2..7);
+
+        let result = node.split(Cow::Owned(2));
+
+        assert_eq!(result, SplitResult::Single(DietNode::new(3..7)));
+    }
+
+    #[test]
+    fn split_of_single_node_with_inclusive_end() {
+        let node = DietNode::new(2..7);
+
+        let result = node.split(Cow::Owned(6));
+
+        assert_eq!(result, SplitResult::Single(DietNode::new(2..6)));
+    }
+
+    #[test]
+    fn split_of_single_node_with_only_value() {
+        let node = DietNode::new(2..3);
+
+        let result = node.split(Cow::Owned(2));
+
+        assert_eq!(result, SplitResult::None);
+    }
+
+    #[test]
+    fn split_of_single_node_with_contained_value() {
+        let node = DietNode::new(2..7);
+
+        let result = node.split(Cow::Owned(5));
+
+        assert_eq!(
+            result,
+            SplitResult::Split(DietNode::new(2..5), DietNode::new(6..7))
+        );
+    }
+
+    #[test]
+    fn split_of_tree_with_contained_value() {
+        let mut root = DietNode::new(10..20);
+
+        let mut first_left_child = DietNode::new(5..10);
+
+        root.insert_left(Some(Box::new(first_left_child)));
+
+        let mut first_right_child = DietNode::new(20..25);
+        root.insert_right(Some(Box::new(first_right_child)));
+
+        let result = root.split(Cow::Owned(23));
+
+
+        let expected_left = {
+            let mut root = DietNode::new(10..20);
+
+            root.insert_right(Some(Box::new(DietNode::new(20..23))));
+
+            root.insert_left(Some(Box::new(DietNode::new(5..10))));
+
+            root
+        };
+
+        let expected_right = DietNode::new(24..25);
+
+        assert_eq!(result, SplitResult::Split(expected_left, expected_right));
     }
 }
