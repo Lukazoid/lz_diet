@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Luke Horsley <luke.horsley@offset1337.co.uk>"]
 license = "MIT"
 
+[badges]
+travis-ci = { repository = "Lukazoid/lz_diet" }
+
 [dependencies]
 matches = "0.1.6"
 binary-tree = "0.2.0"
