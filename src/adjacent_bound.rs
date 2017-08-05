@@ -66,6 +66,12 @@ pub trait AdjacentBound: Ord {
     fn decrement_ref(&mut self);
 }
 
+/// Implements `AdjacentBound` for a type using the specified value to
+/// represent an increment of "one".
+///
+/// For numeric types $one should be 1, however for other types this
+/// will be up the implementor, for dates $one may be a single day.
+#[macro_export]
 macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
         impl ::AdjacentBound for $type {
