@@ -76,27 +76,27 @@ macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
         impl ::AdjacentBound for $type {
             fn is_immediately_before(&self, other: &Self) -> bool {
-                *self == (*other - $one)
+                *self == other.decrement()
             }
 
             fn is_immediately_after(&self, other: &Self) -> bool {
-                *self == (*other + $one)
+                *self == other.increment()
             }
 
             fn increment(&self) -> Self {
-                *self + $one
+                self.to_owned() + $one
             }
 
             fn decrement(&self) -> Self {
-                *self - $one
+                self.to_owned() - $one
             }
 
             fn increment_ref(&mut self) {
-                *self = *self + $one;
+                *self = self.increment();
             }
 
             fn decrement_ref(&mut self) {
-                *self = *self - $one;
+                *self = self.decrement();
             }
         }
     }
