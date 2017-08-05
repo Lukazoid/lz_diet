@@ -1061,15 +1061,14 @@ mod tests {
     fn split_of_tree_with_contained_value() {
         let mut root = DietNode::new(10..20);
 
-        let mut first_left_child = DietNode::new(5..10);
+        let first_left_child = DietNode::new(5..10);
 
         root.insert_left(Some(Box::new(first_left_child)));
 
-        let mut first_right_child = DietNode::new(20..25);
+        let first_right_child = DietNode::new(20..25);
         root.insert_right(Some(Box::new(first_right_child)));
 
         let result = root.split(Cow::Owned(23));
-
 
         let expected_left = {
             let mut root = DietNode::new(10..20);
