@@ -144,7 +144,6 @@ mod chrono_impl {
     adjacent_bound_impl!(Date<FixedOffset>, Duration::days(1));
     adjacent_bound_impl!(Date<Local>, Duration::days(1));
 
-
     adjacent_bound_impl!(DateTime<Utc>, Duration::min_value());
     adjacent_bound_impl!(DateTime<FixedOffset>, Duration::min_value());
     adjacent_bound_impl!(DateTime<Local>, Duration::min_value());
@@ -153,3 +152,17 @@ mod chrono_impl {
 
 #[cfg(feature = "chrono")]
 pub use self::chrono_impl::*;
+
+
+#[cfg(feature = "extprim")]
+mod extprim_impl {
+    use extprim::i128::i128;
+    use extprim::u128::u128;
+    use AdjacentBound;
+
+    adjacent_bound_impl!(i128, i128::one());
+    adjacent_bound_impl!(u128, u128::one());
+}
+
+#[cfg(feature = "extprim")]
+pub use self::extprim_impl::*;

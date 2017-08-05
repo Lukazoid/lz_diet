@@ -8,6 +8,9 @@ extern crate log;
 #[cfg(feature = "chrono")]
 extern crate chrono;
 
+#[cfg(feature = "extprim")]
+extern crate extprim;
+
 mod node_mut_ext;
 mod interval;
 pub use interval::Interval;

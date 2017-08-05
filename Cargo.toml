@@ -16,6 +16,7 @@ matches = "0.1.6"
 binary-tree = "0.2.0"
 log = "0.3.8"
 chrono = { version = "0.4.0", optional = true }
+extprim = { version = "1.4.0", optional = true }
 
 [dev-dependencies]
 env_logger = "0.4.3"
