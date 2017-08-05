@@ -6,21 +6,63 @@ pub trait AdjacentBound: Ord {
     }
 
     /// Determines whether `self` is immediately before `other`.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// assert!(5u32.is_immediately_before(&6));
+    /// assert_eq!(5u32.is_immediately_before(&7), false);
+    /// ```
     fn is_immediately_before(&self, other: &Self) -> bool;
 
     /// Determines whether `self` is immediately after `other`.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// assert!(6u32.is_immediately_after(&5));
+    /// assert_eq!(7u32.is_immediately_after(&5), false);
+    /// ```
     fn is_immediately_after(&self, other: &Self) -> bool;
 
     /// Returns a new value which is `self` incremented.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// assert_eq!(6u32.increment(), 7);
+    /// ```
     fn increment(&self) -> Self;
 
     /// Returns a new value which is `self` decremented.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// assert_eq!(6u32.decrement(), 5);
+    /// ```
     fn decrement(&self) -> Self;
 
     /// Increments `self` in place.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// let mut value = 6u32;
+    /// value.increment_ref();
+    /// assert_eq!(value, 7);
+    /// ```
     fn increment_ref(&mut self);
 
     /// Decrements `self` in place.
+    ///
+    /// ```
+    /// use lz_diet::AdjacentBound;
+    ///
+    /// let mut value = 6u32;
+    /// value.decrement_ref();
+    /// assert_eq!(value, 5);
+    /// ```
     fn decrement_ref(&mut self);
 }
 

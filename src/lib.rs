@@ -45,14 +45,46 @@ impl<T> Drop for Diet<T> {
 }
 
 impl<T> Diet<T> {
+    /// Creates a new `Diet<T>`.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let diet : Diet<u32> = Diet::new();
+    /// ```
     pub fn new() -> Self {
         Self { root: None }
     }
 
+    /// Iterate over a borrow of the `Interval<T>` values.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    /// diet.insert(5u32);
+    ///
+    /// let intervals : Vec<_> = diet.iter().collect();
+    /// assert_eq!(intervals, vec![&(5..6).into()]);
+    /// ```
     pub fn iter(&self) -> Iter<T> {
         self.into_iter()
     }
 
+    /// Clears the `Diet<T>`.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    /// diet.insert(7u32);
+    /// assert_eq!(diet.len(), 1);
+    /// assert_eq!(diet.is_empty(), false);
+    ///
+    /// diet.clear();
+    /// assert_eq!(diet.len(), 0);
+    /// assert_eq!(diet.is_empty(), true);
+    /// ```
     pub fn clear(&mut self) {
         debug!("clearing Diet");
 
@@ -65,14 +97,57 @@ impl<T> Diet<T> {
         debug!("cleared Diet");
     }
 
+    /// Gets the number of `Interval<T>` values in the tree.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    ///
+    /// assert_eq!(diet.len(), 0);
+    ///
+    /// diet.insert(8u32);
+    /// assert_eq!(diet.len(), 1);
+    ///
+    /// diet.insert(10);
+    /// assert_eq!(diet.len(), 2, "a new interval should have started");
+    ///
+    /// diet.insert(9);
+    /// assert_eq!(diet.len(), 1, "the previous intervals should have merged");
+    /// ```
     pub fn len(&self) -> usize {
         self.root().map_or(0, |node| node.len())
     }
 
+    /// Gets whether the `Diet<T>` is empty or contains `Interval<T>` values.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    /// assert!(diet.is_empty(), "a new tree should always be empty");
+    ///
+    /// diet.insert(7u32);
+    /// assert_eq!(diet.is_empty(), false);
+    ///
+    /// diet.clear();
+    /// assert_eq!(diet.is_empty(), true);
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.root().is_none()
     }
 
+    /// Gets whether the `Diet<T>` contains the specified value.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    /// assert_eq!(diet.contains(&5), false);
+    ///
+    /// diet.insert(5u32);
+    /// assert!(diet.contains(&5));
+    /// ```
     pub fn contains<Q>(&self, value: &Q) -> bool
     where
         T: Borrow<Q>,
@@ -157,6 +232,19 @@ impl<T> IntoIterator for Diet<T> {
 }
 
 impl<T: AdjacentBound> Diet<T> {
+    /// Inserts a new value into the `Diet<T>`.
+    ///
+    /// # Returns
+    /// true - if the value was inserted.
+    /// false - if the value already existed contained.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    ///
+    /// let mut diet = Diet::new();
+    /// assert!(diet.insert(5u32));
+    /// assert_eq!(diet.insert(5), false);
+    /// ```
     pub fn insert(&mut self, value: T) -> bool {
         if let Some(ref mut root) = self.root {
             root.insert(value)
@@ -170,6 +258,29 @@ impl<T: AdjacentBound> Diet<T> {
         }
     }
 
+    /// Removes a value from the `Diet<T>`.
+    ///
+    /// This takes a `Cow<T>` as an owned value is only required if the value
+    /// is in the middle of an `Interval<T>`.
+    ///
+    /// # Returns
+    /// true - if the value was found and removed.
+    /// false - if the value was not found.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    /// use std::borrow::Cow;
+    ///
+    /// let mut diet = Diet::new();
+    ///
+    /// let to_remove = 5u32;
+    /// // for a u32 we would probably just use Owned but this demonstrates how
+    /// // borrowed values may also be used.
+    /// assert_eq!(diet.remove(Cow::Borrowed(&to_remove)), false);
+    ///
+    /// diet.insert(5u32);
+    /// assert!(diet.remove(Cow::Borrowed(&to_remove)));
+    /// ```
     pub fn remove<Q>(&mut self, value: Cow<Q>) -> bool
     where
         T: Borrow<Q>,
@@ -198,7 +309,23 @@ impl<T: AdjacentBound> Diet<T> {
         }
     }
 
-
+    /// Splits a `Diet<T>` on a value.
+    /// 
+    /// # Returns
+    /// Two `Diet<T>` values where the first contains children less than the
+    /// value and the second is all children greater than the value.
+    ///
+    /// ```
+    /// use lz_diet::Diet;
+    /// use std::borrow::Cow;
+    /// 
+    /// let mut diet = Diet::new();
+    /// diet.extend_from_slice(&[6u32, 7, 10, 11, 15, 16, 17]);
+    /// 
+    /// let (left, right) = diet.split(Cow::Owned(16));
+    /// assert_eq!(left.into_iter().collect::<Vec<_>>(), vec![(6..8).into(), (10..12).into(), (15..16).into()]);
+    /// assert_eq!(right.into_iter().collect::<Vec<_>>(), vec![(17..18).into()]);
+    /// ```
     pub fn split<Q>(mut self, value: Cow<Q>) -> (Diet<T>, Diet<T>)
     where
         T: Borrow<Q>,
