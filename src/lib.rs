@@ -39,6 +39,8 @@ use std::hash::{Hash, Hasher};
 use binary_tree::{BinaryTree, Node, NodeMut, WalkAction};
 use binary_tree::iter::IntoIter as GenIntoIter;
 
+/// An AVL balanced Discrete Interval Encoding Tree where each node represents
+/// a discrete (non-touching) interval.
 #[derive(Debug, Clone, Eq)]
 pub struct Diet<T> {
     root: Option<Box<DietNode<T>>>,
