@@ -1,5 +1,4 @@
 #![cfg_attr(feature = "nightly", feature(i128_type))]
-#![cfg_attr(feature = "nightly", feature(u128_type))]
 
 #[macro_use]
 extern crate matches;
