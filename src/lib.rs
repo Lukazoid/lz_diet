@@ -323,7 +323,7 @@ impl<T: AdjacentBound> Diet<T> {
         }
     }
 
-    /// Splits a `Diet<T>` on a value.
+    /// Splits a `Diet<T>` on a value. This will drain the elements from self.
     /// 
     /// # Returns
     /// Two `Diet<T>` values where the first contains children less than the
@@ -340,7 +340,7 @@ impl<T: AdjacentBound> Diet<T> {
     /// assert_eq!(left.into_iter().collect::<Vec<_>>(), vec![(6..8).into(), (10..12).into(), (15..16).into()]);
     /// assert_eq!(right.into_iter().collect::<Vec<_>>(), vec![(17..18).into()]);
     /// ```
-    pub fn split<Q>(mut self, value: Cow<Q>) -> (Diet<T>, Diet<T>)
+    pub fn split<Q>(&mut self, value: Cow<Q>) -> (Diet<T>, Diet<T>)
     where
         T: Borrow<Q>,
         Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
