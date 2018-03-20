@@ -1,3 +1,28 @@
+//! This crate provides a Discrete Interval Encoding Tree (DIET) implementation.
+//! 
+//! At a small performance cost on mutation of the tree, large memory savings
+//! are made and performance gains may be made on lookup of elements.
+//! 
+//! An example of using the `Diet<T>`:
+//! 
+//! ```
+//! use lz_diet::{Diet, Interval};
+//! 
+//! let mut diet = Diet::new();
+//! diet.insert(5);
+//! diet.insert(7);
+//! 
+//! diet.insert(6);
+//! 
+//! let intervals: Vec<_> = diet.into_iter().collect();
+//! assert_eq!(&intervals[..], &[Interval::from(5..8)]);
+//! ```
+//! 
+//! Interval endpoints are evaluated to determine whether the interval is
+//! discrete, this check implemented with the `AdjacentBound` trait and may be
+//! quickly implemented for types with a scalar interval using the
+//! `adjacent_bound_impl` macro provided.
+
 #![cfg_attr(feature = "nightly", feature(i128_type))]
 
 #[macro_use]
