@@ -138,21 +138,13 @@ mod tests {
 
 #[cfg(feature = "chrono")]
 mod chrono_impl {
-    use chrono::{Date, DateTime, Duration, FixedOffset, Local, NaiveDate, NaiveDateTime,
-                 NaiveTime, Utc};
+    use chrono::{Date, Duration, FixedOffset, Local, NaiveDate, Utc};
 
     adjacent_bound_impl!(NaiveDate, Duration::days(1));
-    adjacent_bound_impl!(NaiveDateTime, Duration::min_value());
-    adjacent_bound_impl!(NaiveTime, Duration::min_value());
 
     adjacent_bound_impl!(Date<Utc>, Duration::days(1));
     adjacent_bound_impl!(Date<FixedOffset>, Duration::days(1));
     adjacent_bound_impl!(Date<Local>, Duration::days(1));
-
-    adjacent_bound_impl!(DateTime<Utc>, Duration::min_value());
-    adjacent_bound_impl!(DateTime<FixedOffset>, Duration::min_value());
-    adjacent_bound_impl!(DateTime<Local>, Duration::min_value());
-
 }
 
 #[cfg(feature = "chrono")]
