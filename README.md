@@ -10,7 +10,6 @@ This crate provides a Discrete Interval Encoding Tree implementation.
 * The tree is AVL balanced
 
 # Crate Features
-* nightly - When using the crate from nightly
 * bigint - Allows the tree to be used with BigInt and BigUInt
 * extprim - Allows the tree to be used with u128 and i128
 * chrono - Allows the tree to be used with chrono Dates

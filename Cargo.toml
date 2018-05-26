@@ -22,7 +22,6 @@ num-traits = { version = "0.1.40", optional = true }
 
 [features]
 default = []
-nightly = []
 bigint = ["num-bigint", "num-traits"]
 
 [dev-dependencies]

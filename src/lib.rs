@@ -22,9 +22,6 @@
 //! discrete, this check implemented with the `AdjacentBound` trait and may be
 //! quickly implemented for types with a scalar interval using the
 //! `adjacent_bound_impl` macro provided.
-
-#![cfg_attr(feature = "nightly", feature(i128_type))]
-
 #[macro_use]
 extern crate matches;
 extern crate binary_tree;

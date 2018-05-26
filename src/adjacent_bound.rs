@@ -124,6 +124,9 @@ adjacent_bound_impl_and_wrapping!(i64, 1i64);
 adjacent_bound_impl_and_wrapping!(usize, 1usize);
 adjacent_bound_impl_and_wrapping!(isize, 1isize);
 
+adjacent_bound_impl_and_wrapping!(u128, 1u128);
+adjacent_bound_impl_and_wrapping!(i128, 1i128);
+
 #[cfg(test)]
 mod tests {
     use std::num::Wrapping;
@@ -162,16 +165,6 @@ mod extprim_impl {
 
 #[cfg(feature = "extprim")]
 pub use self::extprim_impl::*;
-
-#[cfg(feature = "nightly")]
-mod nightly_impl {
-    adjacent_bound_impl_and_wrapping!(u128, 1u128);
-    adjacent_bound_impl_and_wrapping!(i128, 1i128);
-}
-
-#[cfg(feature = "nightly")]
-pub use self::nightly_impl::*;
-
 
 #[cfg(feature = "bigint")]
 mod num_bigint_impl {
