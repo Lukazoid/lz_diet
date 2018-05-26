@@ -1,5 +1,5 @@
-use {Interval, DietNode};
 use binary_tree::iter::{IntoIter as GenIntoIter, Iter as GenIter};
+use {DietNode, Interval};
 
 /// A borrowing `Iterator` for `DietNode`
 pub struct Iter<'a, T: 'a> {
@@ -22,7 +22,6 @@ impl<'a, T> Iterator for Iter<'a, T> {
         self.inner.next()
     }
 }
-
 
 /// An owned `Iterator` for `DietNode`
 pub struct IntoIter<T> {

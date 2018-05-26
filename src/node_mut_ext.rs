@@ -15,7 +15,9 @@ pub(crate) trait NodeMutExt: NodeMut {
         if let Some(mut right) = self.detach_right() {
             right.walk_reshape(
                 |_| WalkAction::Left,
-                move |node| { node.insert_left(Some(new_node)); },
+                move |node| {
+                    node.insert_left(Some(new_node));
+                },
                 &mut step_out,
             );
             self.insert_right(Some(right));
@@ -77,9 +79,11 @@ pub(crate) trait NodeMutExt: NodeMut {
     {
         let state = RefCell::new(initial_state);
 
-        self.walk_reshape(|node| step_in(node, &mut *state.borrow_mut()),
+        self.walk_reshape(
+            |node| step_in(node, &mut *state.borrow_mut()),
             |node| stop(node, &mut *state.borrow_mut()),
-            |node, action| step_out(node, action, &mut *state.borrow_mut()));
+            |node, action| step_out(node, action, &mut *state.borrow_mut()),
+        );
 
         state.into_inner()
     }
@@ -95,20 +99,20 @@ pub(crate) trait NodeMutExt: NodeMut {
     {
         trace!("conditionally detaching max");
 
-        let (_, extracted_max) = self.walk_reshape_state((None, None),
+        let (_, extracted_max) = self.walk_reshape_state(
+            (None, None),
             |_, _| WalkAction::Right,
             |node, &mut (ref mut new_max, _)| {
                 debug_assert!(node.right().is_none());
 
                 if predicate(node) {
-
                     trace!("detach max predicate passed");
                     *new_max = Some(node.detach_left());
                 } else {
                     trace!("detach max predicate failed");
                 }
             },
-            |node, action, &mut (ref mut new_max, ref mut extracted_max) | {
+            |node, action, &mut (ref mut new_max, ref mut extracted_max)| {
                 if let Some(new_max) = new_max.take() {
                     debug_assert!(extracted_max.is_none());
 
@@ -116,7 +120,8 @@ pub(crate) trait NodeMutExt: NodeMut {
                 }
 
                 step_out(node, action);
-            });
+            },
+        );
 
         if extracted_max.is_some() {
             debug!("successfully extracted max");
@@ -138,7 +143,8 @@ pub(crate) trait NodeMutExt: NodeMut {
     {
         trace!("conditionally detaching min");
 
-        let (_, extracted_min) = self.walk_reshape_state((None, None),
+        let (_, extracted_min) = self.walk_reshape_state(
+            (None, None),
             |_, _| WalkAction::Left,
             |node, &mut (ref mut new_min, _)| {
                 debug_assert!(node.left().is_none());
@@ -159,8 +165,8 @@ pub(crate) trait NodeMutExt: NodeMut {
                 }
 
                 step_out(node, action);
-            });
-
+            },
+        );
 
         if extracted_min.is_some() {
             debug!("successfully extracted min");

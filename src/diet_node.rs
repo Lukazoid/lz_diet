@@ -1,10 +1,10 @@
-use node_mut_ext::NodeMutExt;
-use {AdjacentBound, Interval, SplitResult, WalkDirection};
 use binary_tree::{Node, NodeMut, WalkAction};
-use std::mem;
+use node_mut_ext::NodeMutExt;
 use std::borrow::Borrow;
-use std::cmp;
 use std::borrow::Cow;
+use std::cmp;
+use std::mem;
+use {AdjacentBound, Interval, SplitResult, WalkDirection};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct DietNode<T> {
@@ -44,7 +44,6 @@ impl<T> NodeMut for DietNode<T> {
         trace!("detaching left node");
 
         if let Some(detached) = self.left.take() {
-
             // Only update stats if the node actually changed
             self.update_stats();
 
@@ -62,7 +61,6 @@ impl<T> NodeMut for DietNode<T> {
         trace!("detaching right node");
 
         if let Some(detached) = self.right.take() {
-
             // Only update stats if the node actually changed
             self.update_stats();
 
@@ -80,7 +78,6 @@ impl<T> NodeMut for DietNode<T> {
         trace!("inserting left node");
 
         if self.left.is_some() || tree.is_some() {
-
             let old_left = mem::replace(&mut self.left, tree);
             self.update_stats();
 
@@ -92,14 +89,12 @@ impl<T> NodeMut for DietNode<T> {
 
             None
         }
-
     }
 
     fn insert_right(&mut self, tree: Option<Self::NodePtr>) -> Option<Self::NodePtr> {
         trace!("inserting right node");
 
         if self.right.is_some() || tree.is_some() {
-
             let old_right = mem::replace(&mut self.right, tree);
             self.update_stats();
 
@@ -187,7 +182,6 @@ impl<T> DietNode<T> {
     }
 
     fn navigate_right_and_insert_at_height(&mut self, height: usize, new_node: DietNode<T>) {
-
         trace!("navigating right and inserting node at height {}", height);
 
         // Wrap it in an option so it may be taken
@@ -221,7 +215,6 @@ impl<T> DietNode<T> {
     }
 
     fn navigate_left_and_insert_at_height(&mut self, height: usize, new_node: DietNode<T>) {
-
         trace!("navigating left and inserting node at height {}", height);
 
         let mut new_node = Some(new_node);
@@ -264,7 +257,6 @@ impl<T> DietNode<T> {
             };
 
             Some(joined)
-
         } else {
             right
         };
@@ -388,8 +380,7 @@ impl<T> DietNode<T> {
 
         debug!(
             "updated node stats, count: {}, height: {}",
-            self.count,
-            self.height
+            self.count, self.height
         );
     }
 
@@ -420,37 +411,39 @@ impl<T> DietNode<T> {
         if balance_factor > 1 {
             trace!("node is right heavy");
 
-            self.right_mut().map(|node| if node.balance_factor() < 0 {
-                trace!("rotating right node right");
+            self.right_mut().map(|node| {
+                if node.balance_factor() < 0 {
+                    trace!("rotating right node right");
 
-                node.rotate_right()
-                    .expect("if the node is right-heavy there must be a right child");
+                    node.rotate_right()
+                        .expect("if the node is right-heavy there must be a right child");
 
-                debug!("rotated right node right");
+                    debug!("rotated right node right");
+                }
             });
 
             trace!("rotating node left");
-            self.rotate_left().expect(
-                "if the node is overly left-heavy there must be a left child",
-            );
+            self.rotate_left()
+                .expect("if the node is overly left-heavy there must be a left child");
 
             debug!("rotated node left");
         } else if balance_factor < -1 {
             trace!("node is left heavy");
 
-            self.left_mut().map(|node| if node.balance_factor() > 0 {
-                trace!("rotating left node left");
+            self.left_mut().map(|node| {
+                if node.balance_factor() > 0 {
+                    trace!("rotating left node left");
 
-                node.rotate_left()
-                    .expect("if the node is left-heavy there must be a left child");
+                    node.rotate_left()
+                        .expect("if the node is left-heavy there must be a left child");
 
-                debug!("rotated left node left");
+                    debug!("rotated left node left");
+                }
             });
 
             trace!("rotating node right");
-            self.rotate_right().expect(
-                "if the node is overly right-heavy there must be a right child",
-            );
+            self.rotate_right()
+                .expect("if the node is overly right-heavy there must be a right child");
 
             debug!("rotated node right");
         }
@@ -464,9 +457,9 @@ impl<T: AdjacentBound> DietNode<T> {
     pub(crate) fn insert(&mut self, value: T) -> bool {
         trace!("inserting value");
 
-        let (inserted, _) =
-            self.walk_reshape_state((false, Some(value)),
-                                    |node, &mut (ref mut inserted, ref mut value_option)| {
+        let (inserted, _) = self.walk_reshape_state(
+            (false, Some(value)),
+            |node, &mut (ref mut inserted, ref mut value_option)| {
                 let value = value_option.take().unwrap();
                 match node.insert_or_walk(value) {
                     Ok(did_insert) => {
@@ -480,7 +473,7 @@ impl<T: AdjacentBound> DietNode<T> {
                     }
                 }
             },
-                                    |node, &mut (ref mut inserted, ref mut value_option)| {
+            |node, &mut (ref mut inserted, ref mut value_option)| {
                 if let Some(value) = value_option.take() {
                     match node.insert_or_walk(value) {
                         Ok(did_insert) => {
@@ -502,9 +495,9 @@ impl<T: AdjacentBound> DietNode<T> {
                         }
                     }
                 }
-
             },
-                                    |node, _, _| node.rebalance());
+            |node, _, _| node.rebalance(),
+        );
 
         self.rebalance();
 
@@ -552,7 +545,6 @@ impl<T: AdjacentBound> DietNode<T> {
 
                     let remove_node = current_node.remove_or_walk(value.clone()).ok().unwrap();
                     if remove_node {
-
                         // if the node is to be removed we can just merge the
                         // left and right children
 
@@ -607,17 +599,18 @@ impl<T: AdjacentBound> DietNode<T> {
     {
         trace!("removing value");
 
-        let (result, _) = self.walk_reshape_state((Err(()), Some(value)),
+        let (result, _) = self.walk_reshape_state(
+            (Err(()), Some(value)),
             |node, &mut (ref mut result, ref mut to_remove)| {
-
-                let value = to_remove.take()
+                let value = to_remove
+                    .take()
                     .expect("should only be traversing if there is a value to remove");
 
                 match node.remove_or_walk(value) {
                     Ok(remove_node) => {
                         *result = Ok(remove_node);
                         WalkAction::Stop
-                    },
+                    }
                     Err((value, direction)) => {
                         *to_remove = Some(value);
                         direction.into()
@@ -625,7 +618,7 @@ impl<T: AdjacentBound> DietNode<T> {
                 }
             },
             |node, _| node.rebalance(),
-            |node, action, &mut (ref mut result, _) | {
+            |node, action, &mut (ref mut result, _)| {
                 if result.unwrap_or(false) {
                     match action {
                         WalkAction::Left => {
@@ -640,14 +633,15 @@ impl<T: AdjacentBound> DietNode<T> {
                                 node.insert_right(Some(right));
                             }
                         }
-                        WalkAction::Stop => unreachable!()
+                        WalkAction::Stop => unreachable!(),
                     }
 
                     *result = Ok(false);
                 }
 
                 node.rebalance();
-            });
+            },
+        );
 
         self.rebalance();
 
@@ -672,7 +666,6 @@ impl<T: AdjacentBound> DietNode<T> {
         let old_inclusive_start = self.value_mut().set_inclusive_start(value.increment());
 
         if old_inclusive_start != value {
-
             let new_left_interval = Interval::from(old_inclusive_start..value);
 
             let old_left = self.detach_left();
@@ -838,7 +831,6 @@ impl<T: PartialEq> DietNode<T> {
         trace!("attempting to join this node with a left child");
 
         if let Some(mut left) = self.detach_left() {
-
             let max;
             if left.value().exclusive_end() == self.value().inclusive_start() {
                 trace!(
@@ -852,11 +844,10 @@ impl<T: PartialEq> DietNode<T> {
                     "attempting to detach the maximum child from the left tree which can be joined"
                 );
 
-                max = left.detach_max(|max| {
-                                          max.value().exclusive_end() ==
-                                          self.value().inclusive_start()
-                                      },
-                                      |node, _| node.rebalance());
+                max = left.detach_max(
+                    |max| max.value().exclusive_end() == self.value().inclusive_start(),
+                    |node, _| node.rebalance(),
+                );
                 self.insert_left(Some(left));
             }
 
@@ -883,7 +874,6 @@ impl<T: PartialEq> DietNode<T> {
         trace!("attempting to join this node with a right child");
 
         if let Some(mut right) = self.detach_right() {
-
             let min;
             if right.value().inclusive_start() == self.value().exclusive_end() {
                 trace!(
@@ -898,11 +888,10 @@ impl<T: PartialEq> DietNode<T> {
                     "attempting to detach the minimum child from the right tree which can be joined"
                 );
 
-                min = right.detach_min(|min| {
-                                           min.value().inclusive_start() ==
-                                           self.value().exclusive_end()
-                                       },
-                                       |node, _| node.rebalance());
+                min = right.detach_min(
+                    |min| min.value().inclusive_start() == self.value().exclusive_end(),
+                    |node, _| node.rebalance(),
+                );
                 self.insert_right(Some(right));
             }
 

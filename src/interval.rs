@@ -1,6 +1,6 @@
-use std::ops::Range;
 use std::borrow::Borrow;
 use std::mem;
+use std::ops::Range;
 
 /// A wrapper for `Range<T>` which exposes some useful methods.
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]

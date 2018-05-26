@@ -1,27 +1,28 @@
 //! This crate provides a Discrete Interval Encoding Tree (DIET) implementation.
-//! 
+//!
 //! At a small performance cost on mutation of the tree, large memory savings
 //! are made and performance gains may be made on lookup of elements.
-//! 
+//!
 //! An example of using the `Diet<T>`:
-//! 
+//!
 //! ```
 //! use lz_diet::{Diet, Interval};
-//! 
+//!
 //! let mut diet = Diet::new();
 //! diet.insert(5);
 //! diet.insert(7);
-//! 
+//!
 //! diet.insert(6);
-//! 
+//!
 //! let intervals: Vec<_> = diet.into_iter().collect();
 //! assert_eq!(&intervals[..], &[Interval::from(5..8)]);
 //! ```
-//! 
+//!
 //! Interval endpoints are evaluated to determine whether the interval is
 //! discrete, this check implemented with the `AdjacentBound` trait and may be
 //! quickly implemented for types with a scalar interval using the
 //! `adjacent_bound_impl` macro provided.
+//!
 #[macro_use]
 extern crate matches;
 extern crate binary_tree;
@@ -41,9 +42,8 @@ extern crate num_traits;
 #[cfg(feature = "num-bigint")]
 extern crate num_bigint;
 
-
-mod node_mut_ext;
 mod interval;
+mod node_mut_ext;
 pub use interval::Interval;
 
 mod adjacent_bound;
@@ -61,11 +61,11 @@ pub use diet_node::{DietNode, DietNodePtr};
 mod iterators;
 pub use iterators::{IntoIter, Iter};
 
-use std::iter::FromIterator;
+use binary_tree::iter::IntoIter as GenIntoIter;
+use binary_tree::{BinaryTree, Node, NodeMut, WalkAction};
 use std::borrow::{Borrow, Cow};
 use std::hash::{Hash, Hasher};
-use binary_tree::{BinaryTree, Node, NodeMut, WalkAction};
-use binary_tree::iter::IntoIter as GenIntoIter;
+use std::iter::FromIterator;
 
 /// An AVL balanced Discrete Interval Encoding Tree where each node represents
 /// a discrete (non-touching) interval.
@@ -346,7 +346,7 @@ impl<T: AdjacentBound> Diet<T> {
     }
 
     /// Splits a `Diet<T>` on a value. This will drain the elements from self.
-    /// 
+    ///
     /// # Returns
     /// Two `Diet<T>` values where the first contains children less than the
     /// value and the second is all children greater than the value.
@@ -354,10 +354,10 @@ impl<T: AdjacentBound> Diet<T> {
     /// ```
     /// use lz_diet::Diet;
     /// use std::borrow::Cow;
-    /// 
+    ///
     /// let mut diet = Diet::new();
     /// diet.extend_from_slice(&[6u32, 7, 10, 11, 15, 16, 17]);
-    /// 
+    ///
     /// let (left, right) = diet.split(Cow::Owned(16));
     /// assert_eq!(left.into_iter().collect::<Vec<_>>(), vec![(6..8).into(), (10..12).into(), (15..16).into()]);
     /// assert_eq!(right.into_iter().collect::<Vec<_>>(), vec![(17..18).into()]);

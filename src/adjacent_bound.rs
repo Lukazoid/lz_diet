@@ -99,14 +99,14 @@ macro_rules! adjacent_bound_impl {
                 *self = self.decrement();
             }
         }
-    }
+    };
 }
 
 macro_rules! adjacent_bound_impl_and_wrapping {
     ($type:ty, $one:expr) => {
         adjacent_bound_impl!($type, $one);
         adjacent_bound_impl!(::std::num::Wrapping<$type>, ::std::num::Wrapping($one));
-    }
+    };
 }
 
 adjacent_bound_impl_and_wrapping!(u8, 1u8);
@@ -129,8 +129,8 @@ adjacent_bound_impl_and_wrapping!(i128, 1i128);
 
 #[cfg(test)]
 mod tests {
+    use AdjacentBound;
     use std::num::Wrapping;
-    use AdjacentBound;        
 
     #[test]
     fn overflow_wrapping_tests() {
@@ -152,7 +152,6 @@ mod chrono_impl {
 
 #[cfg(feature = "chrono")]
 pub use self::chrono_impl::*;
-
 
 #[cfg(feature = "extprim")]
 mod extprim_impl {
