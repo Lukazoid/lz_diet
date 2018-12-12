@@ -194,6 +194,32 @@ impl<T> Diet<T> {
             false
         }
     }
+
+    pub fn find_next_gap<'a, 'b, Q>(&'b self, from: &'a Q) -> &'a Q
+    where
+        T: Borrow<Q>,
+        Q: ?Sized + Ord,
+        'b: 'a,
+    {
+        if let Some(ref root) = self.root {
+            let mut next = from;
+            root.walk(|node| {
+                let walk_action = node.calculate_walk_direction(from)
+                    .ok()
+                    .map(|direction| direction.into())
+                    .unwrap_or(WalkAction::Stop);
+
+                if matches!(walk_action, WalkAction::Stop) {
+                    next = node.value().exclusive_end().borrow();
+                }
+                walk_action
+            });
+
+            next
+        } else {
+            from
+        }
+    }
 }
 
 impl<A: AdjacentBound> FromIterator<A> for Diet<A> {
