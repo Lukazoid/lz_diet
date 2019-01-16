@@ -179,8 +179,4 @@ pub(crate) trait NodeMutExt: NodeMut {
 }
 
 // Extend any NodeMut implementors with the additional methods
-impl<N> NodeMutExt for N
-where
-    N: NodeMut,
-{
-}
+impl<N> NodeMutExt for N where N: NodeMut {}

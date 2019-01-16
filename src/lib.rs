@@ -192,7 +192,8 @@ impl<T> Diet<T> {
         if let Some(ref root) = self.root {
             let mut contains = false;
             root.walk(|node| {
-                let walk_action = node.calculate_walk_direction(value)
+                let walk_action = node
+                    .calculate_walk_direction(value)
                     .ok()
                     .map(|direction| direction.into())
                     .unwrap_or(WalkAction::Stop);
@@ -322,14 +323,16 @@ impl<T: AdjacentBound> Diet<T> {
         T: Borrow<Q>,
         Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
-        let remove_result = self.root
+        let remove_result = self
+            .root
             .as_mut()
             .map(|root| root.remove(value))
             .unwrap_or(Err(()));
 
         match remove_result {
             Ok(true) => {
-                if self.root
+                if self
+                    .root
                     .as_mut()
                     .expect("there must be a root node to be removed")
                     .try_remove(|node, _| node.rebalance())
@@ -367,7 +370,8 @@ impl<T: AdjacentBound> Diet<T> {
         T: Borrow<Q>,
         Q: ?Sized + Ord + ToOwned<Owned = T> + AdjacentBound,
     {
-        let split_result = self.root
+        let split_result = self
+            .root
             .take()
             .map(|node| node.split(value))
             .unwrap_or(SplitResult::None);

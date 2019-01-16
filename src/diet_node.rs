@@ -1,10 +1,10 @@
-use binary_tree::{Node, NodeMut, WalkAction};
 use crate::node_mut_ext::NodeMutExt;
+use crate::{AdjacentBound, Interval, SplitResult, WalkDirection};
+use binary_tree::{Node, NodeMut, WalkAction};
 use std::borrow::Borrow;
 use std::borrow::Cow;
 use std::cmp;
 use std::mem;
-use crate::{AdjacentBound, Interval, SplitResult, WalkDirection};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct DietNode<T> {
