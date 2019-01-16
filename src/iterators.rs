@@ -1,5 +1,5 @@
 use binary_tree::iter::{IntoIter as GenIntoIter, Iter as GenIter};
-use {DietNode, Interval};
+use crate::{DietNode, Interval};
 
 /// A borrowing `Iterator` for `DietNode`
 pub struct Iter<'a, T: 'a> {

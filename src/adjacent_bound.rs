@@ -74,7 +74,7 @@ pub trait AdjacentBound: Ord {
 #[macro_export]
 macro_rules! adjacent_bound_impl {
     ($type:ty, $one:expr) => {
-        impl ::AdjacentBound for $type {
+        impl crate::AdjacentBound for $type {
             fn is_immediately_before(&self, other: &Self) -> bool {
                 *self == other.decrement()
             }
@@ -129,7 +129,7 @@ adjacent_bound_impl_and_wrapping!(i128, 1i128);
 
 #[cfg(test)]
 mod tests {
-    use AdjacentBound;
+    use crate::AdjacentBound;
     use std::num::Wrapping;
 
     #[test]

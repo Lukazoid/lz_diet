@@ -44,22 +44,22 @@ extern crate num_bigint;
 
 mod interval;
 mod node_mut_ext;
-pub use interval::Interval;
+pub use crate::interval::Interval;
 
 mod adjacent_bound;
-pub use adjacent_bound::AdjacentBound;
+pub use crate::adjacent_bound::AdjacentBound;
 
 mod walk_direction;
-pub(crate) use walk_direction::WalkDirection;
+pub(crate) use crate::walk_direction::WalkDirection;
 
 mod split_result;
-pub(crate) use split_result::SplitResult;
+pub(crate) use crate::split_result::SplitResult;
 
 mod diet_node;
-pub use diet_node::{DietNode, DietNodePtr};
+pub use crate::diet_node::{DietNode, DietNodePtr};
 
 mod iterators;
-pub use iterators::{IntoIter, Iter};
+pub use crate::iterators::{IntoIter, Iter};
 
 use binary_tree::iter::IntoIter as GenIntoIter;
 use binary_tree::{BinaryTree, Node, NodeMut, WalkAction};
