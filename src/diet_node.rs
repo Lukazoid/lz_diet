@@ -484,12 +484,14 @@ impl<T: AdjacentBound> DietNode<T> {
                         Err((value, WalkDirection::Left)) => {
                             let exclusive_end = value.increment();
                             node.insert_left(Some(Box::new(DietNode::new(value..exclusive_end))));
+                            *inserted = true;
 
                             node.rebalance();
                         }
                         Err((value, WalkDirection::Right)) => {
                             let exclusive_end = value.increment();
                             node.insert_right(Some(Box::new(DietNode::new(value..exclusive_end))));
+                            *inserted = true;
 
                             node.rebalance();
                         }
