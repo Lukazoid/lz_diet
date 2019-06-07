@@ -331,7 +331,7 @@ impl<T> DietNode<T> {
 
             Ok(WalkDirection::Left)
         } else if value >= interval.exclusive_end().borrow() {
-            debug!("walking left as value is greater than or equal to end");
+            debug!("walking right as value is greater than or equal to end");
             Ok(WalkDirection::Right)
         } else {
             debug_assert!(interval.contains(value));
