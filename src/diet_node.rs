@@ -617,7 +617,7 @@ impl<T: AdjacentBound> DietNode<T> {
                     }
                 }
             },
-            |node, _| node.rebalance(),
+            |_node, _| (),
             |node, action, &mut (ref mut result, _)| {
                 if result.unwrap_or(false) {
                     match action {
@@ -643,7 +643,6 @@ impl<T: AdjacentBound> DietNode<T> {
             },
         );
 
-        self.rebalance();
 
         result
     }
