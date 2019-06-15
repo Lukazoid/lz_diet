@@ -637,8 +637,6 @@ impl<T: AdjacentBound> DietNode<T> {
             },
         );
 
-        self.rebalance();
-
         result
     }
 
