@@ -861,6 +861,8 @@ impl<T: PartialEq> DietNode<T> {
 
                 debug!("successfully joined with a left child");
 
+                self.rebalance();
+
                 true
             } else {
                 debug!("unable to join with a left child as no children were touching this node");
@@ -904,6 +906,8 @@ impl<T: PartialEq> DietNode<T> {
                     .set_exclusive_end(min.into_parts().0.take_exclusive_end());
 
                 debug!("successfully joined with a right child");
+
+                self.rebalance();
 
                 true
             } else {
@@ -1074,5 +1078,35 @@ mod tests {
         let expected_right = DietNode::new(24..25);
 
         assert_eq!(result, SplitResult::Split(expected_left, expected_right));
+    }
+
+    #[test]
+    fn insert_with_join_right_still_balanced() {
+        let mut root = DietNode::new(20..21);
+        let mut first_left = DietNode::new(10..11);
+        let second_left = DietNode::new(0..1);
+        first_left.insert_left(Some(Box::new(second_left)));
+        root.insert_left(Some(Box::new(first_left)));
+
+        let first_right = DietNode::new(22..24);
+        root.insert_right(Some(Box::new(first_right)));
+
+        assert!(root.insert(21));
+        assert!(root.is_balanced());
+    }
+
+    #[test]
+    fn insert_with_join_left_still_balanced() {
+        let mut root = DietNode::new(20..21);
+        let mut first_right = DietNode::new(30..31);
+        let second_right = DietNode::new(40..41);
+        first_right.insert_right(Some(Box::new(second_right)));
+        root.insert_right(Some(Box::new(first_right)));
+
+        let first_left = DietNode::new(18..19);
+        root.insert_left(Some(Box::new(first_left)));
+
+        assert!(root.insert(19));
+        assert!(root.is_balanced());
     }
 }
