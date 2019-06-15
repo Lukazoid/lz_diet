@@ -477,26 +477,18 @@ impl<T: AdjacentBound> DietNode<T> {
             },
             |node, &mut (ref mut inserted, ref mut value_option)| {
                 if let Some(value) = value_option.take() {
-                    match node.insert_or_walk(value) {
-                        Ok(did_insert) => {
-                            *inserted = did_insert;
-
+                    match node.calculate_walk_direction(&value) {
+                        Ok(direction) => {
+                            let exclusive_end = value.increment();
+                            let new_node = Some(Box::new(DietNode::new(value..exclusive_end)));
+                            match direction  {
+                                WalkDirection::Left => node.insert_left(new_node),
+                                WalkDirection::Right => node.insert_right(new_node),
+                            };
                             debug_assert!(node.is_balanced());
-                        }
-                        Err((value, WalkDirection::Left)) => {
-                            let exclusive_end = value.increment();
-                            node.insert_left(Some(Box::new(DietNode::new(value..exclusive_end))));
                             *inserted = true;
-
-                            node.rebalance();
                         }
-                        Err((value, WalkDirection::Right)) => {
-                            let exclusive_end = value.increment();
-                            node.insert_right(Some(Box::new(DietNode::new(value..exclusive_end))));
-                            *inserted = true;
-
-                            node.rebalance();
-                        }
+                        Err(()) => unreachable!("if the value was contained in the node it would have been inserted in the walk down the tree"),
                     }
                 }
             },
