@@ -117,7 +117,7 @@ impl<T> NodeMut for DietNode<T> {
 
         let parts = (self.interval, self.left, self.right);
 
-        debug!("deconstructed DietNode into parts");
+        trace!("deconstructed DietNode into parts");
 
         parts
     }
