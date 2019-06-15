@@ -503,8 +503,6 @@ impl<T: AdjacentBound> DietNode<T> {
             |node, _, _| node.rebalance(),
         );
 
-        self.rebalance();
-
         if inserted {
             debug!("inserted value");
         } else {
