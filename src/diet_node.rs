@@ -360,6 +360,8 @@ impl<T> DietNode<T> {
 
         let balance_factor = right_height as isize - left_height as isize;
 
+        debug_assert!(balance_factor >= -2 && balance_factor <= 2, "the balance factor should never get this far out");
+        
         debug!("calculated balance factor: {}", balance_factor);
 
         balance_factor as i8
