@@ -281,6 +281,9 @@ impl<T: AdjacentBound> Diet<T> {
     /// let mut diet = Diet::new();
     /// assert!(diet.insert(5u32));
     /// assert_eq!(diet.insert(5), false);
+    /// assert_eq!(diet.iter().collect::<Vec<_>>(), vec![&(5..6).into()]);
+    /// assert!(diet.insert(15u32));
+    /// assert_eq!(diet.insert(15), false);
     /// ```
     pub fn insert(&mut self, value: T) -> bool {
         if let Some(ref mut root) = self.root {
