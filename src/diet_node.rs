@@ -611,7 +611,7 @@ impl<T: AdjacentBound> DietNode<T> {
                     }
                 }
             },
-            |node, _| node.rebalance(),
+            |node, _| debug_assert!(node.is_balanced()),
             |node, action, &mut (ref mut result, _)| {
                 if result.unwrap_or(false) {
                     match action {
