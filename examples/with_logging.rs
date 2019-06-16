@@ -9,7 +9,7 @@ use lz_diet::Diet;
 use std::borrow::Cow;
 
 pub fn main() {
-    env_logger::init().expect("failed to initialize logger");
+    env_logger::init();
 
     let mut diet = Diet::new();
 

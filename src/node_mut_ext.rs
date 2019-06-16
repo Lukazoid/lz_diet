@@ -1,4 +1,5 @@
 use binary_tree::{NodeMut, WalkAction};
+use log::{debug, trace};
 use std::cell::RefCell;
 
 /// Some additional methods for `NodeMut`.

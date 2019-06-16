@@ -1,6 +1,7 @@
 use crate::node_mut_ext::NodeMutExt;
 use crate::{AdjacentBound, Interval, SplitResult, WalkDirection};
 use binary_tree::{Node, NodeMut, WalkAction};
+use log::{debug, trace, warn};
 use std::borrow::Borrow;
 use std::borrow::Cow;
 use std::cmp;
@@ -360,8 +361,11 @@ impl<T> DietNode<T> {
 
         let balance_factor = right_height as isize - left_height as isize;
 
-        debug_assert!(balance_factor >= -2 && balance_factor <= 2, "the balance factor should never get this far out");
-        
+        debug_assert!(
+            balance_factor >= -2 && balance_factor <= 2,
+            "the balance factor should never get this far out"
+        );
+
         debug!("calculated balance factor: {}", balance_factor);
 
         balance_factor as i8
@@ -914,6 +918,7 @@ impl<T: PartialEq> DietNode<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use matches::assert_matches;
 
     #[test]
     fn detach_max_returns_none_for_no_right() {

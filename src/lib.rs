@@ -23,24 +23,9 @@
 //! quickly implemented for types with a scalar interval using the
 //! `adjacent_bound_impl` macro provided.
 //!
-#[macro_use]
-extern crate matches;
-extern crate binary_tree;
 
-#[macro_use]
-extern crate log;
-
-#[cfg(feature = "chrono")]
-extern crate chrono;
-
-#[cfg(feature = "extprim")]
-extern crate extprim;
-
-#[cfg(feature = "num-traits")]
-extern crate num_traits;
-
-#[cfg(feature = "num-bigint")]
-extern crate num_bigint;
+use log::debug;
+use matches::matches;
 
 mod interval;
 mod node_mut_ext;
