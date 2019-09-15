@@ -194,6 +194,36 @@ impl<T> Diet<T> {
             false
         }
     }
+
+    /// Get the next value outside the `Diet<T>`
+    ///
+    /// Returns a value `r` that's greater or equal to `from`
+    /// and for which `diet.contains(r)` returns `false`.
+    pub fn find_next_gap<'a, 'b, Q>(&'b self, from: &'a Q) -> &'a Q
+    where
+        T: Borrow<Q>,
+        Q: ?Sized + Ord,
+        'b: 'a,
+    {
+        if let Some(ref root) = self.root {
+            let mut next = from;
+            root.walk(|node| {
+                let walk_action = node.calculate_walk_direction(from)
+                    .ok()
+                    .map(|direction| direction.into())
+                    .unwrap_or(WalkAction::Stop);
+
+                if matches!(walk_action, WalkAction::Stop) {
+                    next = node.value().exclusive_end().borrow();
+                }
+                walk_action
+            });
+
+            next
+        } else {
+            from
+        }
+    }
 }
 
 impl<A: AdjacentBound> FromIterator<A> for Diet<A> {
@@ -415,6 +445,27 @@ mod tests {
         let diet = Diet::from_iter([3, 1, 5].iter().cloned());
 
         assert!(diet.contains(&5));
+    }
+
+    #[test]
+    fn find_next_gap_for_empty() {
+        let diet = Diet::<u32>::default();
+
+        assert!(diet.find_next_gap(&5) == &5);
+    }
+
+    #[test]
+    fn find_next_gap_from_outside() {
+        let diet = Diet::from_iter([3, 1, 5].iter().cloned());
+
+        assert!(diet.find_next_gap(&4) == &4);
+    }
+
+    #[test]
+    fn find_next_gap_from_inside() {
+        let diet = Diet::from_iter([3, 1, 5].iter().cloned());
+
+        assert!(diet.find_next_gap(&5) == &6);
     }
 
     #[test]
